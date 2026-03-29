@@ -170,6 +170,7 @@ Since this is a solo capstone project, tasks are being organized by feature prio
 
 Recommended build order is available here:  
 [Build Order Plan](docs/build-order.md)
+
 ---
 
 ## 🔮 Future Improvements
