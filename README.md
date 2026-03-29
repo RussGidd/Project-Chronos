@@ -120,8 +120,11 @@ Planned MVP pages include:
 - Admin Dashboard
 - Admin Employee Detail Page
 
-Wireframe documentation will be added here:  
+Wireframe documentation is available here: 
 [Wireframes](wireframes/README.md)
+
+Frontend route planning is available here:  
+[Frontend Routes](docs/frontend-routes.md)
 
 ---
 
