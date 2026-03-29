@@ -148,18 +148,25 @@ Since this is a solo capstone project, tasks are being organized by feature prio
 
 ## 📂 Repository Structure
 
-    Project-Chronos/
-    │
+Project-Chronos/
+│
+├── README.md
+├── docs/
+│   ├── api-routes.md
+│   ├── build-order.md
+│   ├── database-schema.md
+│   ├── frontend-routes.md
+│   └── user-stories.md
+├── diagrams/
+│   └── erd-mermaid.md
+└── wireframes/
     ├── README.md
-    ├── docs/
-    │   ├── api-routes.md
-    │   ├── database-schema.md
-    │   └── user-stories.md
-    ├── diagrams/
-    │   └── erd-mermaid.md
-    └── wireframes/
-        └── README.md
+    └── wireframe.png
 
+## 🛠️ Development Plan
+
+Recommended build order is available here:  
+[Build Order Plan](docs/build-order.md)
 ---
 
 ## 🔮 Future Improvements
