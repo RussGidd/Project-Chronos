@@ -1,6 +1,9 @@
 # Project Chronos
 
-Full Stack Capstone Project
+Full Stack Capstone Project  
+Author: Russell Giddens
+
+---
 
 ## 🚀 30-Second Elevator Pitch
 
@@ -73,114 +76,84 @@ These features are planned after the MVP is working.
 
 ## 👤 MVP User Stories
 
-### Employee Login
-As an employee, I want to enter my employee number and PIN so that I can securely access my timekeeping options.
+Project Chronos is designed for two main user types in the MVP:
+- employees
+- administrators
 
-### Begin Shift
-As an employee, I want to begin my shift quickly from a kiosk-style home screen so that I can start work without confusion.
-
-### Lunch Out
-As an employee, I want to clock out for lunch so that my meal break is recorded accurately.
-
-### Lunch In
-As an employee, I want to clock back in from lunch so that I can continue my shift and preserve an accurate time record.
-
-### End Shift
-As an employee, I want to end my shift so that my total hours for the day are recorded correctly.
-
-### View Hours
-As an employee, I want to view my hours for today and this week so that I can verify my time records and catch mistakes early.
-
-### Admin Login
-As an administrator, I want to securely log in so that only authorized users can manage employee records.
-
-### Admin Dashboard
-As an administrator, I want to see all employee timekeeping activity in one place so that I can monitor the workforce in real time.
-
-### Sort and Review Hours
-As an administrator, I want to sort employees by hours worked, hire date, or name so that I can review labor distribution more clearly.
-
-### Correct Punch Records
-As an administrator, I want to add or edit employee punches so that timekeeping mistakes can be corrected.
-
-### Manage Employee Records
-As an administrator, I want to create, deactivate, and update employee accounts so that the system reflects the current workforce.
+Full user stories are available here:  
+[User Stories](docs/user-stories.md)
 
 ---
 
-## 🗄️ Planned Database Schema
+## 🗄️ Database Design
 
-> This section will be expanded with tables, columns, and relationships.
+The MVP database is designed around employees, admins, and punch records.
 
-Planned core entities:
-- Employees
-- Admins
-- Punch Records
-- Employee Status / Roles
+Detailed schema documentation is available here:  
+[Database Schema](docs/database-schema.md)
 
-A Mermaid ER diagram will also be included in this repository.
+Mermaid ER diagram is available here:  
+[ER Diagram](diagrams/erd-mermaid.md)
 
 ---
 
-## 🔌 Planned API Endpoints
+## 🔌 API Route Planning
 
-> This section will be expanded as the backend design is finalized.
-
-Planned endpoint groups:
+The backend route plan includes:
 - Auth
 - Employees
-- Punches
+- Punch Records
 - Hours
 - Admin
 
+Full route planning documentation is available here:  
+[API Routes](docs/api-routes.md)
+
 ---
 
-## 🧩 Planned Frontend Pages and Routes
+## 🧩 Frontend Planning
 
-> This section will be expanded with detailed wireframes and route planning.
-
-Planned pages:
+Planned MVP pages include:
 - Home / Kiosk Page
 - Employee Hours Page
 - Admin Login Page
 - Admin Dashboard
 - Admin Employee Detail Page
 
+Wireframe documentation will be added here:  
+[Wireframes](wireframes/README.md)
+
 ---
 
 ## 📌 Project Management Plan
 
-This project will be managed through GitHub using repository issues and, if needed, a project board.
+This project will be managed through GitHub using repository issues and planning documents.
 
-High-level ticket categories:
-- Pitch and planning
-- Database design
-- Backend API
-- Authentication
-- Employee interface
-- Admin dashboard
-- Validation rules
-- Styling and polish
-- Testing
-- Deployment preparation
+Current planning includes:
+- README pitch documentation
+- database schema design
+- Mermaid ER diagram
+- API route planning
+- user stories
+- wireframe planning
+- frontend route planning
+- project folder structure
 
-Since this is a solo capstone project, tickets will be assigned by feature priority and completed in development order.
+Since this is a solo capstone project, tasks are being organized by feature priority and development order.
 
 ---
 
-## 🔮 Future Improvements
+## 📂 Repository Structure
 
-- Fair scheduling recommendations based on employee hours
-- Real-time alerts for labor issues
-- Manager-level role hierarchy
-- Payroll integration
-- Schedule publishing tools
-- Text notification support
-
----
-
-## 👤 Author
-
-Russell Giddens
-
-Full Stack Academy Capstone Project
+```text
+Project-Chronos/
+│
+├── README.md
+├── docs/
+│   ├── api-routes.md
+│   ├── database-schema.md
+│   └── user-stories.md
+├── diagrams/
+│   └── erd-mermaid.md
+└── wireframes/
+    └── README.md
