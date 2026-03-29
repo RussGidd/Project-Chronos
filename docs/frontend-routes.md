@@ -12,8 +12,8 @@ The MVP route plan separates employee-facing pages from admin-facing pages so th
 
 ## Route List
 
-### `/`
 ## Home / Kiosk Page
+**Route:** `/`
 
 **User type:**  
 Employee-facing primary page
@@ -40,8 +40,8 @@ This is the main page employees use to interact with the system.
 
 ---
 
-### `/hours`
 ## Employee Hours Page
+**Route:** `/hours`
 
 **User type:**  
 Employee-facing authenticated page
@@ -63,8 +63,8 @@ Allows an employee to view their hours and punch history.
 
 ---
 
-### `/admin/login`
 ## Admin Login Page
+**Route:** `/admin/login`
 
 **User type:**  
 Administrator
@@ -85,8 +85,8 @@ Provides a secure login page for admin access.
 
 ---
 
-### `/admin/dashboard/today`
 ## Admin Dashboard Today View
+**Route:** `/admin/dashboard/today`
 
 **User type:**  
 Administrator
@@ -112,8 +112,8 @@ Shows employee activity and hours for the current day.
 
 ---
 
-### `/admin/dashboard/week`
 ## Admin Dashboard Week View
+**Route:** `/admin/dashboard/week`
 
 **User type:**  
 Administrator
@@ -139,8 +139,8 @@ Shows employee weekly hour totals and work patterns.
 
 ---
 
-### `/admin/employees/:employeeId`
 ## Admin Employee Detail Page
+**Route:** `/admin/employees/:employeeId`
 
 **User type:**  
 Administrator
