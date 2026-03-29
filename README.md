@@ -120,7 +120,7 @@ Planned MVP pages include:
 - Admin Dashboard
 - Admin Employee Detail Page
 
-Wireframe documentation is available here: 
+Wireframe documentation is available here:  
 [Wireframes](wireframes/README.md)
 
 Frontend route planning is available here:  
@@ -140,6 +140,7 @@ Current planning includes:
 - user stories
 - wireframe planning
 - frontend route planning
+- build order planning
 - project folder structure
 
 Since this is a solo capstone project, tasks are being organized by feature priority and development order.
@@ -148,20 +149,22 @@ Since this is a solo capstone project, tasks are being organized by feature prio
 
 ## 📂 Repository Structure
 
-Project-Chronos/
-│
-├── README.md
-├── docs/
-│   ├── api-routes.md
-│   ├── build-order.md
-│   ├── database-schema.md
-│   ├── frontend-routes.md
-│   └── user-stories.md
-├── diagrams/
-│   └── erd-mermaid.md
-└── wireframes/
+    Project-Chronos/
+    │
     ├── README.md
-    └── wireframe.png
+    ├── docs/
+    │   ├── api-routes.md
+    │   ├── build-order.md
+    │   ├── database-schema.md
+    │   ├── frontend-routes.md
+    │   └── user-stories.md
+    ├── diagrams/
+    │   └── erd-mermaid.md
+    └── wireframes/
+        ├── README.md
+        └── wireframe.png
+
+---
 
 ## 🛠️ Development Plan
 
