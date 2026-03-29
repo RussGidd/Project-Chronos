@@ -145,15 +145,32 @@ Since this is a solo capstone project, tasks are being organized by feature prio
 
 ## 📂 Repository Structure
 
-```text
-Project-Chronos/
-│
-├── README.md
-├── docs/
-│   ├── api-routes.md
-│   ├── database-schema.md
-│   └── user-stories.md
-├── diagrams/
-│   └── erd-mermaid.md
-└── wireframes/
-    └── README.md
+    Project-Chronos/
+    │
+    ├── README.md
+    ├── docs/
+    │   ├── api-routes.md
+    │   ├── database-schema.md
+    │   └── user-stories.md
+    ├── diagrams/
+    │   └── erd-mermaid.md
+    └── wireframes/
+        └── README.md
+
+---
+
+## 🔮 Future Improvements
+
+- Fair scheduling recommendations based on employee hours
+- Real-time labor issue alerts
+- Manager-level role hierarchy
+- Payroll integration
+- Schedule publishing tools
+- Text notification support
+
+---
+
+## 👤 Author
+
+Russell Giddens  
+Full Stack Academy Capstone Project
