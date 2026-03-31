@@ -11,6 +11,20 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/connect", makeContact);
+
+app.get("/seed", seed);
+
+async function seed(req, res) {
+  await db.query(`CREATE TABLE IF NOT EXISTS connections(
+    id SERIAL PRIMARY KEY,
+    message TEXT NOT NULL);
+    `);
+
+  await db.query(`INSERT INTO connections (message)
+  VALUES('Connection Made');`);
+
+  res.send("database seeded");
+}
 async function makeContact(req, res) {
   try {
     const connection = await getConnection();
