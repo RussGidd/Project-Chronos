@@ -1,0 +1,27 @@
+{
+  "name": "capstone",
+  "version": "1.0.0",
+  "description": "Full Stack Capstone Project  \r Author: Russell Giddens",
+  "keywords": [],
+  "homepage": "https://github.com/RussGidd/Project-Chronos#readme",
+  "bugs": {
+    "url": "https://github.com/RussGidd/Project-Chronos/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RussGidd/Project-Chronos.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "vite": "^8.0.3"
+  }
+}
