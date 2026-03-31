@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon --exec \"node --env-file=.env\" index.js",
-    "db:schema": "psql -d connections -f db/schema.sql",
+    "db:schema": "psql -d connections_u83l -f db/schema.sql",
     "db:seed": "node --env-file=.env db/seed.js"
   },
   "author": "",
