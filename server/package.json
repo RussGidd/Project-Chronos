@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env index.js",
+    "start": "node index.js",
     "dev": "nodemon --exec \"node --env-file=.env\" index.js",
     "db:schema": "psql -d connections -f db/schema.sql",
     "db:seed": "node --env-file=.env db/seed.js"
