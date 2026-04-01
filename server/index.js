@@ -1,4 +1,8 @@
-import { getConnection } from "./db/queries/connections.js";
+import {
+  getConnection,
+  initializeDatabase,
+  seed as seedConnection,
+} from "./db/queries/connections.js";
 import express from "express";
 import db from "./db/client.js";
 import cors from "cors";
@@ -15,15 +19,13 @@ app.get("/connect", makeContact);
 app.get("/seed", seed);
 
 async function seed(req, res) {
-  await db.query(`CREATE TABLE IF NOT EXISTS connections(
-    id SERIAL PRIMARY KEY,
-    message TEXT NOT NULL);
-    `);
-
-  await db.query(`INSERT INTO connections (message)
-  VALUES('Connection Made');`);
-
-  res.send("database seeded");
+  try {
+    await initializeDatabase();
+    const message = await seedConnection();
+    res.status(200).json(message);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 async function makeContact(req, res) {
   try {
@@ -35,6 +37,7 @@ async function makeContact(req, res) {
 }
 
 await db.connect();
+await initializeDatabase();
 
 app.listen(PORT, () => {
   console.log(`Listening on PORT ${PORT}`);
