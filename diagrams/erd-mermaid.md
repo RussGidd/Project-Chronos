@@ -3,8 +3,7 @@
 ```mermaid
 erDiagram
     EMPLOYEES {
-        int id PK
-        string employee_number
+        int employee_number PK
         string pin_hash
         string first_name
         string nickname
@@ -16,27 +15,27 @@ erDiagram
         timestamp updated_at
     }
 
-    ADMINS {
+    SHIFTS {
         int id PK
-        string username
-        string password_hash
-        string first_name
-        string last_name
-        string role
+        int employee_number FK
+        date shift_date
+        string status
+        number total_hours
         timestamp created_at
         timestamp updated_at
     }
 
-    PUNCH_RECORDS {
+    TIME_PUNCHES {
         int id PK
-        int employee_id FK
+        int shift_id FK
         string punch_type
         timestamp punch_time
-        int entered_by_admin_id FK
+        int entered_by_employee_number FK
         string notes
         timestamp created_at
         timestamp updated_at
     }
 
-    EMPLOYEES ||--o{ PUNCH_RECORDS : has
-    ADMINS o|--o{ PUNCH_RECORDS : enters_or_corrects
+    EMPLOYEES ||--o{ SHIFTS : has
+    SHIFTS ||--o{ TIME_PUNCHES : contains
+    EMPLOYEES o|--o{ TIME_PUNCHES : enters_or_corrects

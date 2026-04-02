@@ -2,12 +2,13 @@
 
 ## Overview
 
-Project Chronos uses a backend API to support employee authentication, employee punch actions, hours tracking, and administrator oversight.
+Project Chronos uses a backend API to support employee authentication, employee shift tracking, time punches, hours tracking, and role-based administrator oversight.
 
 The MVP route groups are:
 - Auth
 - Employees
-- Punch Records
+- Shifts
+- Time Punches
 - Hours
 - Admin
 
@@ -15,47 +16,29 @@ The MVP route groups are:
 
 ## Auth Routes
 
-### Employee Auth
-
-#### POST /api/auth/employee/login
+### POST /api/auth/login
 Authenticate an employee using employee number and PIN.
 
 **Request body example:**
 
     {
-      "employeeNumber": "12345",
+      "employeeNumber": 12345,
       "pin": "54321"
     }
 
 **Purpose:**
 - verify employee credentials
-- return an employee token
-- allow access to employee timekeeping actions and hours page
+- return an authentication token
+- allow access to employee or admin features based on employee role
 
----
-
-### Admin Auth
-
-#### POST /api/auth/admin/login
-Authenticate an admin using username and password.
-
-**Request body example:**
-
-    {
-      "username": "adminUser",
-      "password": "securePassword"
-    }
-
-**Purpose:**
-- verify admin credentials
-- return an admin token
-- allow access to admin-only routes and pages
+**Tables used:**
+- employees
 
 ---
 
 ## Employee Routes
 
-### GET /api/employees/:employeeId
+### GET /api/employees/:employeeNumber
 Get a single employee profile.
 
 **Purpose:**
@@ -73,18 +56,20 @@ Create a new employee account.
 **Purpose:**
 - allow admin to add a new employee
 - store login and profile information
+- support the employee creation flow requested in instructor feedback
 
 **Tables used:**
 - employees
 
 ---
 
-### PATCH /api/employees/:employeeId
+### PATCH /api/employees/:employeeNumber
 Update employee information.
 
 **Purpose:**
 - allow admin to edit employee details
 - allow admin to reset employee PIN
+- allow admin to change role
 - allow admin to activate or deactivate employees
 
 **Tables used:**
@@ -92,15 +77,73 @@ Update employee information.
 
 ---
 
-## Punch Record Routes
+## Shift Routes
 
-### POST /api/punch-records
-Create a new punch record.
+### POST /api/shifts
+Create a new shift for an employee.
 
 **Request body example:**
 
     {
-      "employeeId": 7,
+      "employeeNumber": 12345,
+      "shiftDate": "2026-03-28"
+    }
+
+**Purpose:**
+- create a new shift record when an employee begins work
+- tie future punches to a specific shift
+
+**Tables used:**
+- shifts
+
+---
+
+### GET /api/shifts/:employeeNumber/today
+Get today’s shifts for one employee.
+
+**Purpose:**
+- support employee hours view
+- support admin employee detail page
+- help identify an employee’s active or completed shift for the day
+
+**Tables used:**
+- shifts
+
+---
+
+### GET /api/shifts/:employeeNumber/week
+Get current week shifts for one employee.
+
+**Purpose:**
+- support weekly hours view
+- support weekly admin review
+
+**Tables used:**
+- shifts
+
+---
+
+### PATCH /api/shifts/:shiftId
+Update a shift record.
+
+**Purpose:**
+- allow admin to flag or correct a shift
+- allow shift status updates such as open, completed, flagged, or corrected
+
+**Tables used:**
+- shifts
+
+---
+
+## Time Punch Routes
+
+### POST /api/time-punches
+Create a new time punch for a shift.
+
+**Request body example:**
+
+    {
+      "shiftId": 14,
       "punchType": "shift_start",
       "punchTime": "2026-03-28T08:00:00"
     }
@@ -110,77 +153,85 @@ Create a new punch record.
 - record lunch start
 - record lunch end
 - record shift end
-- support manual admin corrections when needed
+- keep each punch tied to a specific shift
 
 **Tables used:**
-- punch_records
+- time_punches
 
 ---
 
-### GET /api/punch-records/:employeeId
-Get punch records for one employee.
+### GET /api/time-punches/:shiftId
+Get all time punches for one shift.
 
 **Purpose:**
-- show employee punch history
+- show punch history for one shift
 - support employee hours page
 - support admin employee detail page
 
 **Tables used:**
-- punch_records
+- time_punches
 
 ---
 
-### PATCH /api/punch-records/:punchRecordId
-Update a punch record.
+### PATCH /api/time-punches/:timePunchId
+Update a time punch.
 
 **Purpose:**
 - allow admin to correct a punch time
 - allow admin to add notes for corrections
 
 **Tables used:**
-- punch_records
+- time_punches
 
 ---
 
 ## Hours Routes
 
-### GET /api/hours/:employeeId/today
-Get today’s punch summary and total hours for one employee.
+### GET /api/hours/:employeeNumber/today
+Get today’s shift summary, punch summary, and total hours for one employee.
 
 **Purpose:**
 - show employee hours for the current day
 - show running hours if employee is still clocked in
+- combine shift and punch data for easier frontend display
 
 **Tables used:**
-- punch_records
+- employees
+- shifts
+- time_punches
 
 ---
 
-### GET /api/hours/:employeeId/week
-Get current week punch summary and total hours for one employee.
+### GET /api/hours/:employeeNumber/week
+Get current week shift summary, punch summary, and total hours for one employee.
 
 **Purpose:**
 - show employee hours for the week
 - support employee hours page
+- support admin weekly review
 
 **Tables used:**
-- punch_records
+- employees
+- shifts
+- time_punches
 
 ---
 
 ## Admin Routes
 
 ### GET /api/admin/dashboard/today
-Get current employee statuses and today’s hour totals.
+Get current employee statuses and today’s shift totals.
 
 **Purpose:**
 - show all employees on the admin dashboard
 - support sorting by hours, hire date, or name
 - show whether employees are clocked in, on lunch, or clocked out
+- surface possible shift issues for admin review
 
 **Tables used:**
 - employees
-- punch_records
+- shifts
+- time_punches
 
 ---
 
@@ -193,7 +244,8 @@ Get employee week totals for the admin dashboard.
 
 **Tables used:**
 - employees
-- punch_records
+- shifts
+- time_punches
 
 ---
 
@@ -201,7 +253,7 @@ Get employee week totals for the admin dashboard.
 Get all employees for admin view.
 
 **Purpose:**
-- show searchable or sortable employee list
+- show sortable employee list
 - support dashboard and employee detail navigation
 
 **Tables used:**
@@ -211,11 +263,13 @@ Get all employees for admin view.
 
 ## Validation Notes
 
-The backend will also be responsible for enforcing punch rules such as:
-- employee cannot start lunch before starting shift
-- employee cannot end shift before starting shift
+The backend will also be responsible for enforcing punch and shift rules such as:
+- employee cannot start a shift if an open shift already exists
+- employee cannot start lunch before starting a shift
+- employee cannot end a shift before starting one
 - employee cannot start lunch twice in a row
 - employee cannot end lunch without first starting lunch
+- time punches must belong to a valid shift
 
 Some edge cases may still be allowed with warnings or admin review, depending on business rules.
 

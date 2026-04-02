@@ -2,9 +2,14 @@
 
 ## Overview
 
-Project Chronos is a full-stack timekeeping management application for small businesses. The MVP database is designed to support employee authentication, employee punch actions, hours tracking, and administrator oversight.
+Project Chronos is a full-stack timekeeping management application for small businesses. The MVP database is designed to support employee authentication, employee shift tracking, time punches, hours tracking, and administrator oversight.
 
-The database is centered around employees, admins, and punch records.
+Based on instructor feedback, the MVP database is centered around:
+- employees
+- shifts
+- time_punches
+
+Administrators are not stored in a separate table. Instead, admin access is handled through a role field on the employees table.
 
 ---
 
@@ -12,52 +17,50 @@ The database is centered around employees, admins, and punch records.
 
 ### 1. employees
 
-Stores employee account and profile information.
+Stores employee account, profile, and authorization information.
 
 | Column Name | Data Type | Details |
 | --- | --- | --- |
-| id | SERIAL PRIMARY KEY | Internal database ID |
-| employee_number | VARCHAR(5) UNIQUE NOT NULL | 5-digit employee login number |
-| pin_hash | TEXT NOT NULL | Hashed 5-digit employee PIN |
+| employee_number | INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY | System-generated employee number used for login |
+| pin_hash | TEXT NOT NULL | Hashed employee PIN |
 | first_name | VARCHAR(50) NOT NULL | Employee first name |
 | nickname | VARCHAR(50) | Optional nickname |
 | last_name | VARCHAR(50) NOT NULL | Employee last name |
-| date_of_hire | DATE NOT NULL | Employee hire date |
-| role | VARCHAR(20) NOT NULL DEFAULT 'employee' | Employee role |
+| date_of_hire | DATE NOT NULL DEFAULT CURRENT_DATE | Defaults to current date when employee is created |
+| role | VARCHAR(20) NOT NULL DEFAULT 'employee' | employee, admin, manager, contractor |
 | status | VARCHAR(20) NOT NULL DEFAULT 'active' | active, inactive, leave, vacation, medical, restricted |
 | created_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record creation timestamp |
 | updated_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record update timestamp |
 
 ---
 
-### 2. admins
+### 2. shifts
 
-Stores administrator login and account information.
+Stores one work shift for one employee.
 
 | Column Name | Data Type | Details |
 | --- | --- | --- |
-| id | SERIAL PRIMARY KEY | Internal database ID |
-| username | VARCHAR(50) UNIQUE NOT NULL | Admin login name |
-| password_hash | TEXT NOT NULL | Hashed admin password |
-| first_name | VARCHAR(50) NOT NULL | Admin first name |
-| last_name | VARCHAR(50) NOT NULL | Admin last name |
-| role | VARCHAR(20) NOT NULL DEFAULT 'admin' | admin, shift_manager, general_manager |
+| id | SERIAL PRIMARY KEY | Internal shift ID |
+| employee_number | INTEGER NOT NULL REFERENCES employees(employee_number) ON DELETE CASCADE | Employee assigned to the shift |
+| shift_date | DATE NOT NULL DEFAULT CURRENT_DATE | Calendar date for the shift |
+| status | VARCHAR(20) NOT NULL DEFAULT 'open' | open, completed, flagged, corrected |
+| total_hours | NUMERIC(5,2) | Calculated total hours for the shift |
 | created_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record creation timestamp |
 | updated_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record update timestamp |
 
 ---
 
-### 3. punch_records
+### 3. time_punches
 
-Stores every employee punch action.
+Stores each punch event connected to a specific shift.
 
 | Column Name | Data Type | Details |
 | --- | --- | --- |
-| id | SERIAL PRIMARY KEY | Internal database ID |
-| employee_id | INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE | Employee tied to the punch |
+| id | SERIAL PRIMARY KEY | Internal punch ID |
+| shift_id | INTEGER NOT NULL REFERENCES shifts(id) ON DELETE CASCADE | Shift connected to this punch |
 | punch_type | VARCHAR(20) NOT NULL | shift_start, lunch_start, lunch_end, shift_end |
 | punch_time | TIMESTAMP NOT NULL | Date and time of the punch |
-| entered_by_admin_id | INTEGER REFERENCES admins(id) ON DELETE SET NULL | Admin who created or corrected the punch |
+| entered_by_employee_number | INTEGER REFERENCES employees(employee_number) ON DELETE SET NULL | Employee or admin who entered or corrected the punch |
 | notes | TEXT | Optional note for manual corrections |
 | created_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record creation timestamp |
 | updated_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record update timestamp |
@@ -66,28 +69,36 @@ Stores every employee punch action.
 
 ## Table Relationships
 
-- One employee can have many punch records
-- One admin can create or correct many punch records
-- Punch records belong to exactly one employee
-- A punch record may optionally be tied to one admin if it was manually entered or corrected
+- One employee can have many shifts
+- One shift belongs to exactly one employee
+- One shift can have many time punches
+- One time punch belongs to exactly one shift
+- One employee may optionally create or correct many time punches if acting in an admin role
 
 ---
 
 ## MVP Design Notes
 
-### Why use punch_records instead of a shifts table?
-For the MVP, storing raw punch records is simpler and more flexible. It allows the application to:
-- calculate hours from the actual punch history
-- show employees their exact punch data
-- let admins review and correct individual punch actions
-- support future features like edit history and schedule comparisons
+### Why use a shifts table?
+A shifts table makes the data model easier to understand and easier to expand. It allows the application to:
+- group punches into one work session
+- calculate totals per shift
+- support incomplete or flagged shifts
+- support future reporting and scheduling features
+- keep time punches tied to a specific shift instead of floating independently
 
-### Role handling
-The MVP mainly uses:
-- employee
-- admin
+### Why use one employees table?
+Employees and administrators are both workers in the system. Using one employees table with a role field:
+- avoids duplicate account storage
+- simplifies authentication structure
+- supports future roles like manager or contractor
+- makes authorization easier to expand later
 
-The schema allows future growth if shift_manager and general_manager roles are added later.
+### Employee number handling
+The employee number is generated by the database using an identity column. This gives each employee a unique system-generated number that can also be used for login.
+
+### Date of hire handling
+The date of hire defaults to the current date when the employee record is created. This simplifies employee creation while still allowing the value to be displayed and stored.
 
 ### Status handling
 The MVP mainly needs:

@@ -7,7 +7,7 @@ Author: Russell Giddens
 
 ## 🚀 30-Second Elevator Pitch
 
-Project Chronos is a full-stack timekeeping management application built for small businesses that need a cleaner and more reliable way to track employee work hours. Employees use a simple kiosk-style interface to begin shifts, start and end lunch, end shifts, and view their hours for the day or week. Administrators use a secure dashboard to monitor employee status in real time, review punch history, sort workers by hours worked, and correct timekeeping errors. The long-term goal is to support fairer scheduling decisions by giving managers accurate labor data instead of guesswork.
+Project Chronos is a full-stack timekeeping management application built for small businesses that need a cleaner and more reliable way to track employee work hours. Employees use a simple kiosk-style interface to begin shifts, start and end lunch, end shifts, and view their hours for the day or week. Employees with elevated permissions can access secure admin views to create employee accounts, monitor employee status in real time, review shift and time punch history, sort workers by hours worked, and correct timekeeping errors. The long-term goal is to support fairer scheduling decisions by giving managers accurate labor data instead of guesswork.
 
 ---
 
@@ -16,9 +16,9 @@ Project Chronos is a full-stack timekeeping management application built for sma
 These are the core features planned for the minimum viable product.
 
 ### 1. Employee Authentication
-- Employees log in with a 5-digit employee number and 5-digit PIN
+- Employees log in with a system-generated employee number and PIN
 - Employees do not create their own accounts
-- Administrator creates employee accounts
+- Employees with admin-level roles can create employee accounts
 
 ### 2. Employee Timekeeping Actions
 - Begin Shift
@@ -29,31 +29,35 @@ These are the core features planned for the minimum viable product.
 ### 3. Employee Hours Page
 - View hours worked today
 - View hours worked for the current week
-- View punch history for the selected period
-- Show running totals based on raw punch data
+- View shift summaries and time punches
+- Show running totals based on shift and punch data
 
-### 4. Punch Validation Rules
+### 4. Punch and Shift Validation Rules
 - Prevent invalid actions such as lunch before shift start
 - Prevent ending a shift before beginning one
+- Prevent punches that do not belong to a valid shift
 - Allow certain edge cases with warning messages for admin review
 - Surface possible discrepancies instead of silently failing
 
-### 5. Admin Authentication
-- Admin logs in through a separate secure flow
-- Admin uses password-based authentication
+### 5. Admin Authentication and Authorization
+- Employees with elevated roles can access admin views
+- Admin access is protected separately from the main kiosk flow
+- Role-based authorization controls access to management features
 
 ### 6. Admin Dashboard
 - View all employees
 - See whether an employee is currently clocked in, on lunch, or clocked out
-- See current day hours and week hours in real time
+- See current day and week hours in real time
 - Sort employees by hours worked, date of hire, or name
+- Access employee creation flow
 
-### 7. Admin Employee Detail Page
+### 7. Admin Employee Detail and Employee Creation
 - View employee profile details
-- View punch history
-- Add, edit, or correct punch records
+- View shifts and time punches
+- Add, edit, or correct timekeeping records
 - Activate or deactivate employees
 - Reset employee PIN if needed
+- Create new employee accounts
 
 ---
 
@@ -78,7 +82,7 @@ These features are planned after the MVP is working.
 
 Project Chronos is designed for two main user types in the MVP:
 - employees
-- administrators
+- administrators and managers with elevated permissions
 
 Full user stories are available here:  
 [User Stories](docs/user-stories.md)
@@ -87,7 +91,12 @@ Full user stories are available here:
 
 ## 🗄️ Database Design
 
-The MVP database is designed around employees, admins, and punch records.
+The MVP database is designed around:
+- employees
+- shifts
+- time_punches
+
+Administrators are not stored in a separate table. Instead, elevated access is handled through a role field on the employees table.
 
 Detailed schema documentation is available here:  
 [Database Schema](docs/database-schema.md)
@@ -102,7 +111,8 @@ Mermaid ER diagram is available here:
 The backend route plan includes:
 - Auth
 - Employees
-- Punch Records
+- Shifts
+- Time Punches
 - Hours
 - Admin
 
@@ -119,6 +129,7 @@ Planned MVP pages include:
 - Admin Login Page
 - Admin Dashboard
 - Admin Employee Detail Page
+- Admin Create Employee Page
 
 Wireframe documentation is available here:  
 [Wireframes](wireframes/README.md)
@@ -168,8 +179,7 @@ Since this is a solo capstone project, tasks are being organized by feature prio
 
 ## 🛠️ Development Plan
 
-Recommended build order is available here:  
-[Build Order Plan](docs/build-order.md)
+Recommended build order is available here: [Build Order Plan](docs/build-order.md)
 
 ---
 

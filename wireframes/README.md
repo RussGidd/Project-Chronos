@@ -10,6 +10,8 @@ The goal of the wireframes is to show:
 - where major buttons, inputs, and tables will appear
 - how employee-facing screens differ from admin-facing screens
 
+Administrators are employees with elevated permissions based on role. The admin views are still shown separately in the wireframes so the kiosk flow remains simple and the management tools remain protected.
+
 ---
 
 ## Planned MVP Screens
@@ -22,6 +24,7 @@ The main MVP screens are:
 4. Admin Dashboard - Today View
 5. Admin Dashboard - Week View
 6. Admin Employee Detail Page
+7. Admin Create Employee Page
 
 ---
 
@@ -29,10 +32,10 @@ The main MVP screens are:
 
 The current wireframe image is a draft visual reference for the MVP layout plan.
 
-Planned file:
+Current file:
 - `wireframe.png`
 
-Once added to the repository, the image can be viewed directly from this folder.
+![Project Chronos Wireframe](wireframe.png)
 
 ---
 
@@ -49,15 +52,16 @@ This page is the main employee-facing screen. It includes:
 
 ### 2. Employee Hours Page
 This page allows the employee to review:
-- today’s punches
+- today’s shift summary
+- today’s time punches
 - today’s total hours
-- current week punches
+- current week shift summary
 - current week total hours
 
 ### 3. Admin Login Page
-This page provides a separate login flow for administrators with:
-- username input
-- password input
+This page provides a separate login flow for employees with admin-level access. It includes:
+- employee number or admin credential input
+- PIN or password input depending on final auth design
 - login button
 - cancel button
 
@@ -65,25 +69,38 @@ This page provides a separate login flow for administrators with:
 This page shows:
 - employee list
 - current statuses
-- today’s punch activity
+- today’s shift activity
 - today’s running totals
 - sorting controls
+- access to create a new employee
 
 ### 5. Admin Dashboard - Week View
 This page shows:
-- weekly punch summaries
+- weekly shift summaries
 - weekly totals
 - employee comparison across the week
 - sorting controls
+- access to create a new employee
 
 ### 6. Admin Employee Detail Page
 This page allows admin to:
 - review one employee profile
-- view punch history
+- view shifts
+- view time punches
 - edit employee information
 - reset PIN
+- change employee role
 - activate or deactivate employee
-- correct punch records
+- correct timekeeping records
+
+### 7. Admin Create Employee Page
+This page allows admin to:
+- enter employee name information
+- enter optional nickname
+- assign initial PIN
+- assign role
+- assign status if needed
+- create a new employee account
 
 ---
 
