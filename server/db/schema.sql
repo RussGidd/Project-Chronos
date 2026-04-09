@@ -1,6 +1,43 @@
-DROP TABLE IF EXISTS connections;
+-- DROP TABLE IF EXISTS connections;
 
-CREATE TABLE connections (
+-- CREATE TABLE connections (
+--     id SERIAL PRIMARY KEY,
+--     message text
+-- );
+DROP TABLE IF EXISTS time_punches;
+DROP TABLE IF EXISTS shifts;
+DROP TABLE IF EXISTS employees;
+
+CREATE TABLE employees (
+    employee_number INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    pin_hash TEXT NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    nickname VARCHAR(50),
+    last_name VARCHAR(50) NOT NULL,
+    date_of_hire DATE NOT NULL DEFAULT CURRENT_DATE,
+    role VARCHAR(20) NOT NULL DEFAULT 'employee',
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE shifts (
     id SERIAL PRIMARY KEY,
-    message text
+    employee_number INTEGER NOT NULL REFERENCES employees(employee_number) ON DELETE CASCADE,
+    shift_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    status VARCHAR(20) NOT NULL DEFAULT 'open',
+    total_hours NUMERIC(5,2),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE time_punches (
+    id SERIAL PRIMARY KEY,
+    shift_id INTEGER NOT NULL REFERENCES shifts(id) ON DELETE CASCADE,
+    punch_type VARCHAR(20) NOT NULL,
+    punch_time TIMESTAMP NOT NULL,
+    entered_by_employee_number INTEGER REFERENCES employees(employee_number) ON DELETE SET NULL,
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
