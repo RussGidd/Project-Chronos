@@ -4,13 +4,21 @@ export function requireUser(request, response, next) {
   try {
     const authorization = request.headers.authorization;
 
-    if (!authorization) {
+    // WHY: Explicit Bearer validation prevents malformed headers from reaching JWT verification.
+    if (!authorization || !authorization.startsWith("Bearer ")) {
       return response.status(401).json({
-        error: "Authorization header is required.",
+        error: "A valid Bearer authorization header is required.",
       });
     }
 
-    const token = authorization.replace("Bearer ", "");
+    const token = authorization.slice("Bearer ".length).trim();
+
+    if (!token) {
+      // WHY: Empty tokens should fail early with a clear auth error rather than a generic JWT crash path.
+      return response.status(401).json({
+        error: "A valid Bearer authorization header is required.",
+      });
+    }
 
     const user = verifyToken(token);
 

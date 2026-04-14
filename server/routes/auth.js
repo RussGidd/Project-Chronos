@@ -1,6 +1,6 @@
 import express from "express";
-import bcrypt from "bcrypt";
 import { getEmployeeByEmployeeNumber } from "../db/queries/employees.js";
+import { comparePin } from "../utils/hashPin.js";
 import { createToken } from "../utils/jwt.js";
 
 const authRouter = express.Router();
@@ -9,7 +9,9 @@ authRouter.post("/login", login);
 
 async function login(request, response) {
   try {
-    const { employeeNumber, pin } = request.body;
+    // WHY: Normalize and validate auth input early so invalid payloads fail fast with clear feedback.
+    const employeeNumber = String(request.body?.employeeNumber ?? "").trim();
+    const pin = String(request.body?.pin ?? "").trim();
 
     if (!employeeNumber || !pin) {
       return response.status(400).json({
@@ -19,17 +21,12 @@ async function login(request, response) {
 
     const employee = await getEmployeeByEmployeeNumber(employeeNumber);
 
-    if (!employee) {
-      return response.status(404).json({
-        error: "Employee not found.",
-      });
-    }
-
-    const isValidPin = await bcrypt.compare(pin, employee.pin_hash);
+    const isValidPin = employee ? await comparePin(pin, employee.pin_hash) : false;
 
     if (!isValidPin) {
+      // WHY: Return one generic auth failure message to avoid revealing whether an employee number exists.
       return response.status(401).json({
-        error: "Invalid PIN.",
+        error: "Invalid employee number or PIN.",
       });
     }
 
