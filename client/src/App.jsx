@@ -1,20 +1,72 @@
 import "./App.css";
 import { useState } from "react";
-// import { useEffect } from "react";
+
+const AUTH_STORAGE_KEY = "chronos-auth-session";
+
+function readStoredSession() {
+  // WHY: Restoring a valid saved session improves auth usability without changing backend behavior.
+  try {
+    const rawSession = localStorage.getItem(AUTH_STORAGE_KEY);
+
+    if (!rawSession) {
+      return { token: "", employee: null };
+    }
+
+    const parsedSession = JSON.parse(rawSession);
+
+    if (!parsedSession?.token || !parsedSession?.employee) {
+      return { token: "", employee: null };
+    }
+
+    return parsedSession;
+  } catch {
+    return { token: "", employee: null };
+  }
+}
+
+async function parseResponseJson(response) {
+  // WHY: A shared response parser gives consistent auth error handling when APIs return non-JSON bodies.
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
 
 function App() {
+  const savedSession = readStoredSession();
   const [employeeNumber, setEmployeeNumber] = useState("");
   const [pin, setPin] = useState("");
   const [message, setMessage] = useState("");
-  const [token, setToken] = useState("");
-  const [employee, setEmployee] = useState(null);
+  const [token, setToken] = useState(savedSession.token);
+  const [employee, setEmployee] = useState(savedSession.employee);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
   async function handleLogin(event) {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
+    // WHY: Client-side input checks provide immediate feedback and avoid avoidable auth requests.
+    const normalizedEmployeeNumber = employeeNumber.trim();
+    const normalizedPin = pin.trim();
+
+    if (!normalizedEmployeeNumber || !normalizedPin) {
+      setMessage("Employee number and PIN are required.");
+      return;
+    }
+
+    if (!/^\d+$/.test(normalizedEmployeeNumber)) {
+      setMessage("Employee number must use digits only.");
+      return;
+    }
+
     setMessage("Logging in...");
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
@@ -23,27 +75,40 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          employeeNumber: Number(employeeNumber),
-          pin,
+          employeeNumber: normalizedEmployeeNumber,
+          pin: normalizedPin,
         }),
       });
 
-      const json = await response.json();
+      const json = await parseResponseJson(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to log in.");
       }
 
+      // WHY: Persisting auth state keeps users logged in after refresh and reduces repeated login friction.
       setToken(json.token);
       setEmployee(json.employee);
+      localStorage.setItem(
+        AUTH_STORAGE_KEY,
+        JSON.stringify({ token: json.token, employee: json.employee }),
+      );
       setMessage(json.message);
       setPin("");
     } catch (error) {
       setMessage(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function handleBeginShift() {
+    // WHY: Guarding protected actions on the client avoids unnecessary unauthorized requests.
+    if (!token) {
+      setMessage("Please log in before starting a shift.");
+      return;
+    }
+
     setMessage("Starting shift...");
 
     try {
@@ -54,7 +119,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await parseResponseJson(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to start shift.");
@@ -67,10 +132,12 @@ function App() {
   }
 
   function handleLogout() {
+    // WHY: Clearing local session data ensures logout fully removes client-side auth state.
     setToken("");
     setEmployee(null);
     setEmployeeNumber("");
     setPin("");
+    localStorage.removeItem(AUTH_STORAGE_KEY);
     setMessage("Logged out.");
   }
 
@@ -105,10 +172,12 @@ function App() {
             />
           </div>
 
-          <button type="submit">Log In</button>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Logging In..." : "Log In"}
+          </button>
         </form>
 
-        <p>{message}</p>
+        <p aria-live="polite">{message}</p>
       </main>
     );
   }
@@ -126,33 +195,9 @@ function App() {
         Log Out
       </button>
 
-      <p>{message}</p>
+      <p aria-live="polite">{message}</p>
     </main>
   );
 }
-
-//   useEffect(() => {
-//     getConnection();
-
-//     async function getConnection() {
-//       try {
-//         const response = await fetch(`${API_BASE}/connect`);
-//         if (!response.ok) {
-//           throw new Error("Unable to reach the server.");
-//         }
-
-//         const json = await response.json();
-//         setMessage(json.message);
-//       } catch (error) {
-//         setMessage(error.message);
-//       }
-//     }
-//   }, [API_BASE]);
-//   return (
-//     <>
-//       <h1>{message}</h1>
-//     </>
-//   );
-// }
 
 export default App;
