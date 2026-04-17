@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon --exec \"node --env-file=.env\" index.js",
-    "db:schema": "psql -d connections_u83l -f db/schema.sql",
+    "db:schema": "node --env-file=.env -e \"import('./db/client.js').then(async ({ default: db }) => { const fs = await import('node:fs/promises'); try { await db.connect(); await db.query(await fs.readFile('db/schema.sql', 'utf8')); } finally { await db.end(); } })\"",
     "db:seed": "node --env-file=.env db/seed.js"
   },
   "author": "",

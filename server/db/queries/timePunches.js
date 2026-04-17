@@ -21,3 +21,14 @@ export async function createTimePunch(
 
   return result.rows[0];
 }
+
+export async function getTimePunchesByShiftId(shiftId) {
+  const SQL = `
+    SELECT *
+    FROM time_punches
+    WHERE shift_id = $1
+    ORDER BY punch_time ASC;
+  `;
+  const result = await db.query(SQL, [shiftId]);
+  return result.rows;
+}

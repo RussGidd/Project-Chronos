@@ -8,6 +8,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [token, setToken] = useState("");
   const [employee, setEmployee] = useState(null);
+  const [hoursToday, setHoursToday] = useState(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -36,6 +37,7 @@ function App() {
 
       setToken(json.token);
       setEmployee(json.employee);
+      setHoursToday(null);
       setMessage(json.message);
       setPin("");
     } catch (error) {
@@ -45,6 +47,7 @@ function App() {
 
   async function handleBeginShift() {
     setMessage("Starting shift...");
+    setHoursToday(null);
 
     try {
       const response = await fetch(`${API_BASE}/api/shifts/start`, {
@@ -66,11 +69,59 @@ function App() {
     }
   }
 
+  async function handleEndShift() {
+    setMessage("Ending shift...");
+    setHoursToday(null);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/shifts/end`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error || "Unable to end shift.");
+      }
+
+      setMessage(json.message);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function handleViewHours() {
+    setMessage("Loading hours...");
+
+    try {
+      const response = await fetch(`${API_BASE}/api/employees/me/hours/today`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error || "Unable to load hours.");
+      }
+
+      setHoursToday(json);
+      setMessage("Hours loaded.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
   function handleLogout() {
     setToken("");
     setEmployee(null);
     setEmployeeNumber("");
     setPin("");
+    setHoursToday(null);
     setMessage("Logged out.");
   }
 
@@ -122,11 +173,41 @@ function App() {
         Begin Shift
       </button>
 
+      <button type="button" onClick={handleEndShift}>
+        End Shift
+      </button>
+
+      <button type="button" onClick={handleViewHours}>
+        View Hours
+      </button>
+
       <button type="button" onClick={handleLogout}>
         Log Out
       </button>
 
       <p>{message}</p>
+
+      {hoursToday && (
+        <section>
+          <h3>Today&apos;s Hours</h3>
+          <p>Total Hours: {hoursToday.totalHoursToday}</p>
+
+          {hoursToday.shifts.length === 0 ? (
+            <p>No shifts found for today.</p>
+          ) : (
+            <ul>
+              {hoursToday.shifts.map(function (shift) {
+                return (
+                  <li key={shift.id}>
+                    Shift #{shift.id}: {shift.status}, {shift.runningHours}{" "}
+                    hours, {shift.timePunches.length} punches
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
     </main>
   );
 }

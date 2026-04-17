@@ -1,9 +1,3 @@
--- DROP TABLE IF EXISTS connections;
-
--- CREATE TABLE connections (
---     id SERIAL PRIMARY KEY,
---     message text
--- );
 DROP TABLE IF EXISTS time_punches;
 DROP TABLE IF EXISTS shifts;
 DROP TABLE IF EXISTS employees;

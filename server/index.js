@@ -1,12 +1,8 @@
-// import {
-//   getConnection,
-//   initializeDatabase,
-//   seed as seedConnection,
-// } from "./db/queries/connections.js";
 import express from "express";
 import db from "./db/client.js";
 import cors from "cors";
 import authRouter from "./routes/auth.js";
+import employeesRouter from "./routes/employees.js";
 import shiftsRouter from "./routes/shifts.js";
 import {
   getConnection,
@@ -24,6 +20,7 @@ app.get("/connect", makeContact);
 app.get("/seed", seed);
 
 app.use("/api/auth", authRouter);
+app.use("/api/employees", employeesRouter);
 app.use("/api/shifts", shiftsRouter);
 
 async function seed(req, res) {
@@ -46,8 +43,6 @@ async function makeContact(request, response) {
 }
 
 await db.connect();
-
-// await initializeDatabase();
 
 app.listen(PORT, () => {
   console.log(`Listening on PORT ${PORT}`);
