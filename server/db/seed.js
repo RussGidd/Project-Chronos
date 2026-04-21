@@ -1,14 +1,5 @@
 import db from "./client.js";
 import bcrypt from "bcrypt";
-// import { seed } from "./queries/connections.js";
-
-// try {
-//   await db.connect();
-//   const message = await seed();
-//   console.log("Database seeded.", message);
-// } finally {
-//   await db.end();
-// }
 
 try {
   await db.connect();
@@ -36,7 +27,7 @@ try {
     "Russell",
     null,
     "Giddens",
-    "employee",
+    "admin",
     "active",
     secondHashedPin,
     "Morgan",
@@ -48,7 +39,7 @@ try {
 
   const result = await db.query(SQL, values);
 
-  console.log("🌱 Database seeded with test employee.");
+  console.log("🌱 Database seeded with test employees.");
   console.log(result.rows);
 } catch (error) {
   console.error("Error seeding database:", error);

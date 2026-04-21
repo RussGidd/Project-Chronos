@@ -41,6 +41,19 @@ export async function getTodayShiftsByEmployeeNumber(employeeNumber) {
   return result.rows;
 }
 
+export async function getRecentShiftsByEmployeeNumber(employeeNumber) {
+  const SQL = `
+    SELECT *
+    FROM shifts
+    WHERE employee_number = $1
+    ORDER BY created_at DESC
+    LIMIT 10;
+  `;
+
+  const result = await db.query(SQL, [employeeNumber]);
+  return result.rows;
+}
+
 export async function getCurrentOpenShiftByEmployeeNumber(employeeNumber) {
   const SQL = `
     SELECT *

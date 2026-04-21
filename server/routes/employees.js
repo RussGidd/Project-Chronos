@@ -1,14 +1,109 @@
 import express from "express";
+import { requireAdmin } from "../middleware/requireAdmin.js";
 import { requireUser } from "../middleware/requireUser.js";
+import {
+  createEmployee,
+  getAllEmployees,
+  getSafeEmployeeByEmployeeNumber,
+} from "../db/queries/employees.js";
 import {
   getTodayShiftsByEmployeeNumber,
   getCurrentOpenShiftByEmployeeNumber,
+  getRecentShiftsByEmployeeNumber,
 } from "../db/queries/shifts.js";
 import { getTimePunchesByShiftId } from "../db/queries/timePunches.js";
 
 const employeesRouter = express.Router();
 
+employeesRouter.get("/", requireAdmin, getEmployees);
+employeesRouter.post("/", requireAdmin, addEmployee);
+employeesRouter.get(
+  "/:employeeNumber/history",
+  requireAdmin,
+  getEmployeeHistory,
+);
 employeesRouter.get("/me/hours/today", requireUser, getMyHoursToday);
+
+async function getEmployees(request, response) {
+  try {
+    const employees = await getAllEmployees();
+
+    return response.status(200).json(employees);
+  } catch (error) {
+    return response.status(500).json({
+      error: "Failed to fetch employees.",
+    });
+  }
+}
+
+async function addEmployee(request, response) {
+  try {
+    const { pin, first_name, nickname, last_name, role, status } = request.body;
+
+    if (!pin || !first_name || !last_name) {
+      return response.status(400).json({
+        error: "PIN, first name, and last name are required.",
+      });
+    }
+
+    const employee = await createEmployee({
+      pin,
+      first_name,
+      nickname,
+      last_name,
+      role,
+      status,
+    });
+
+    return response.status(201).json(employee);
+  } catch (error) {
+    return response.status(500).json({
+      error: "Failed to create employee.",
+    });
+  }
+}
+
+async function getEmployeeHistory(request, response) {
+  try {
+    const employeeNumber = Number(request.params.employeeNumber);
+
+    if (!employeeNumber) {
+      return response.status(400).json({
+        error: "A valid employee number is required.",
+      });
+    }
+
+    const employee = await getSafeEmployeeByEmployeeNumber(employeeNumber);
+
+    if (!employee) {
+      return response.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    const shifts = await getRecentShiftsByEmployeeNumber(employeeNumber);
+
+    const shiftsWithPunches = await Promise.all(
+      shifts.map(async function (shift) {
+        const timePunches = await getTimePunchesByShiftId(shift.id);
+
+        return {
+          ...shift,
+          timePunches,
+        };
+      }),
+    );
+
+    return response.status(200).json({
+      employee,
+      shifts: shiftsWithPunches,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      error: "Failed to fetch employee history.",
+    });
+  }
+}
 
 async function getMyHoursToday(request, response) {
   try {
