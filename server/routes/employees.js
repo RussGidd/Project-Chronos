@@ -7,11 +7,14 @@ import {
   getSafeEmployeeByEmployeeNumber,
 } from "../db/queries/employees.js";
 import {
-  getTodayShiftsByEmployeeNumber,
-  getCurrentOpenShiftByEmployeeNumber,
-  getRecentShiftsByEmployeeNumber,
+  getShiftsByEmployeeNumberAndWeek,
+  getThisWeekShiftsByEmployeeNumber,
 } from "../db/queries/shifts.js";
-import { getTimePunchesByShiftId } from "../db/queries/timePunches.js";
+import {
+  getEmployeeTimePunchesByShiftId,
+  getTimePunchesByShiftId,
+  updateTimePunchTimeForEmployee,
+} from "../db/queries/timePunches.js";
 
 const employeesRouter = express.Router();
 
@@ -22,7 +25,12 @@ employeesRouter.get(
   requireAdmin,
   getEmployeeHistory,
 );
-employeesRouter.get("/me/hours/today", requireUser, getMyHoursToday);
+employeesRouter.patch(
+  "/:employeeNumber/punches/:punchId",
+  requireAdmin,
+  updateEmployeePunch,
+);
+employeesRouter.get("/me/hours/week", requireUser, getMyHoursThisWeek);
 
 async function getEmployees(request, response) {
   try {
@@ -81,21 +89,67 @@ async function getEmployeeHistory(request, response) {
       });
     }
 
-    const shifts = await getRecentShiftsByEmployeeNumber(employeeNumber);
+    const currentWeekStart = getWeekStartDate(new Date());
+    const requestedWeekStart = request.query.weekStart
+      ? getWeekStartDate(new Date(`${request.query.weekStart}T00:00:00`))
+      : currentWeekStart;
+    const employeeCreatedWeekStart = getWeekStartDate(
+      new Date(employee.created_at),
+    );
+
+    let selectedWeekStart = requestedWeekStart;
+
+    if (selectedWeekStart < employeeCreatedWeekStart) {
+      selectedWeekStart = employeeCreatedWeekStart;
+    }
+
+    if (selectedWeekStart > currentWeekStart) {
+      selectedWeekStart = currentWeekStart;
+    }
+
+    const shifts = await getShiftsByEmployeeNumberAndWeek(
+      employeeNumber,
+      selectedWeekStart,
+    );
 
     const shiftsWithPunches = await Promise.all(
       shifts.map(async function (shift) {
         const timePunches = await getTimePunchesByShiftId(shift.id);
+        const runningHours = calculateWorkedHours(shift, timePunches);
 
         return {
           ...shift,
           timePunches,
+          runningHours,
         };
       }),
     );
+    const totalHoursThisWeek = shiftsWithPunches.reduce(function (total, shift) {
+      return total + shift.runningHours;
+    }, 0);
+    const dailyTotals = buildDailyTotals(shiftsWithPunches);
+    const isRunning = shiftsWithPunches.some(function (shift) {
+      return shift.status === "open";
+    });
+    const previousWeekStart = addDays(selectedWeekStart, -7);
+    const nextWeekStart = addDays(selectedWeekStart, 7);
+    const canViewPrevious = previousWeekStart >= employeeCreatedWeekStart;
+    const canViewNext = nextWeekStart <= currentWeekStart;
 
     return response.status(200).json({
       employee,
+      week: {
+        weekStart: selectedWeekStart,
+        weekEnd: addDays(selectedWeekStart, 6),
+        currentWeekStart,
+        previousWeekStart: canViewPrevious ? previousWeekStart : null,
+        nextWeekStart: canViewNext ? nextWeekStart : null,
+        canViewPrevious,
+        canViewNext,
+      },
+      totalHoursThisWeek: Number(totalHoursThisWeek.toFixed(2)),
+      isRunning,
+      dailyTotals,
       shifts: shiftsWithPunches,
     });
   } catch (error) {
@@ -105,53 +159,16 @@ async function getEmployeeHistory(request, response) {
   }
 }
 
-async function getMyHoursToday(request, response) {
+async function getMyHoursThisWeek(request, response) {
   try {
     const employeeNumber = request.user.employeeNumber;
 
-    const todayShifts = await getTodayShiftsByEmployeeNumber(employeeNumber);
-    const currentOpenShift =
-      await getCurrentOpenShiftByEmployeeNumber(employeeNumber);
-
-    let shifts = [...todayShifts];
-
-    if (currentOpenShift) {
-      const openShiftAlreadyIncluded = shifts.some(function (shift) {
-        return shift.id === currentOpenShift.id;
-      });
-
-      if (!openShiftAlreadyIncluded) {
-        shifts.unshift(currentOpenShift);
-      }
-    }
+    const weekShifts = await getThisWeekShiftsByEmployeeNumber(employeeNumber);
 
     const shiftsWithPunches = await Promise.all(
-      shifts.map(async function (shift) {
-        const timePunches = await getTimePunchesByShiftId(shift.id);
-
-        let runningHours = 0;
-
-        if (timePunches.length > 0) {
-          const firstPunchTime = new Date(timePunches[0].punch_time);
-          let endTime = null;
-
-          if (shift.status === "open") {
-            endTime = new Date();
-          }
-
-          if (shift.status === "completed") {
-            const lastPunchTime = new Date(
-              timePunches[timePunches.length - 1].punch_time,
-            );
-            endTime = lastPunchTime;
-          }
-
-          if (endTime) {
-            const millisecondsWorked = endTime - firstPunchTime;
-            const hoursWorked = millisecondsWorked / (1000 * 60 * 60);
-            runningHours = Number(hoursWorked.toFixed(2));
-          }
-        }
+      weekShifts.map(async function (shift) {
+        const timePunches = await getEmployeeTimePunchesByShiftId(shift.id);
+        const runningHours = calculateWorkedHours(shift, timePunches);
 
         return {
           ...shift,
@@ -161,20 +178,205 @@ async function getMyHoursToday(request, response) {
       }),
     );
 
-    const totalHoursToday = shiftsWithPunches.reduce(function (total, shift) {
+    const totalHoursThisWeek = shiftsWithPunches.reduce(function (total, shift) {
       return total + shift.runningHours;
     }, 0);
+    const dailyTotals = buildDailyTotals(shiftsWithPunches);
+    const isRunning = shiftsWithPunches.some(function (shift) {
+      return shift.status === "open";
+    });
 
     return response.status(200).json({
       employeeNumber,
-      totalHoursToday: Number(totalHoursToday.toFixed(2)),
+      totalHoursThisWeek: Number(totalHoursThisWeek.toFixed(2)),
+      isRunning,
+      dailyTotals,
       shifts: shiftsWithPunches,
     });
   } catch (error) {
     return response.status(500).json({
-      error: "Unable to get hours for today.",
+      error: "Unable to get hours for this week.",
     });
   }
+}
+
+async function updateEmployeePunch(request, response) {
+  try {
+    const employeeNumber = Number(request.params.employeeNumber);
+    const punchId = Number(request.params.punchId);
+    const { hour, minute, period } = request.body;
+
+    if (!employeeNumber || !punchId) {
+      return response.status(400).json({
+        error: "A valid employee number and punch ID are required.",
+      });
+    }
+
+    const employee = await getSafeEmployeeByEmployeeNumber(employeeNumber);
+
+    if (!employee) {
+      return response.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    if (
+      employee.role === "admin" &&
+      employee.employee_number !== request.user.employeeNumber
+    ) {
+      return response.status(403).json({
+        error: "Admins cannot edit another admin's punches.",
+      });
+    }
+
+    const hourNumber = Number(hour);
+    const minuteNumber = Number(minute);
+
+    if (
+      !Number.isInteger(hourNumber) ||
+      hourNumber < 1 ||
+      hourNumber > 12 ||
+      !Number.isInteger(minuteNumber) ||
+      minuteNumber < 0 ||
+      minuteNumber > 59 ||
+      !["AM", "PM"].includes(period)
+    ) {
+      return response.status(400).json({
+        error: "Enter a valid hour, minute, and AM or PM.",
+      });
+    }
+
+    let hourForDatabase = hourNumber;
+
+    if (period === "AM" && hourForDatabase === 12) {
+      hourForDatabase = 0;
+    }
+
+    if (period === "PM" && hourForDatabase !== 12) {
+      hourForDatabase += 12;
+    }
+
+    const timePunch = await updateTimePunchTimeForEmployee(
+      punchId,
+      employeeNumber,
+      hourForDatabase,
+      minuteNumber,
+      request.user.employeeNumber,
+    );
+
+    if (!timePunch) {
+      return response.status(404).json({
+        error: "Punch not found for this employee.",
+      });
+    }
+
+    return response.status(200).json({
+      message: "Punch updated successfully.",
+      timePunch,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      error: "Unable to update punch.",
+    });
+  }
+}
+
+function buildDailyTotals(shifts) {
+  const totalsByDate = {};
+
+  shifts.forEach(function (shift) {
+    const dateKey = getDateKey(shift.shift_date);
+    const date = new Date(`${dateKey}T00:00:00`);
+
+    if (!totalsByDate[dateKey]) {
+      totalsByDate[dateKey] = {
+        date: dateKey,
+        dayName: date.toLocaleDateString("en-US", { weekday: "long" }),
+        totalHours: 0,
+        isRunning: false,
+      };
+    }
+
+    totalsByDate[dateKey].totalHours += shift.runningHours;
+
+    if (shift.status === "open") {
+      totalsByDate[dateKey].isRunning = true;
+    }
+  });
+
+  return Object.values(totalsByDate)
+    .map(function (day) {
+      return {
+        ...day,
+        totalHours: Number(day.totalHours.toFixed(2)),
+      };
+    })
+    .sort(function (firstDay, secondDay) {
+      return firstDay.date.localeCompare(secondDay.date);
+    });
+}
+
+function getWeekStartDate(dateValue) {
+  const date = new Date(dateValue);
+  date.setHours(0, 0, 0, 0);
+
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - daysSinceMonday);
+
+  return getDateKey(date);
+}
+
+function addDays(dateValue, numberOfDays) {
+  const date = new Date(`${dateValue}T00:00:00`);
+  date.setDate(date.getDate() + numberOfDays);
+
+  return getDateKey(date);
+}
+
+function getDateKey(dateValue) {
+  if (typeof dateValue === "string") {
+    return dateValue.slice(0, 10);
+  }
+
+  const year = dateValue.getFullYear();
+  const month = String(dateValue.getMonth() + 1).padStart(2, "0");
+  const day = String(dateValue.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function calculateWorkedHours(shift, timePunches) {
+  let workedMilliseconds = 0;
+  let activeWorkStart = null;
+
+  timePunches.forEach(function (punch) {
+    const punchTime = new Date(punch.punch_time);
+
+    if (punch.punch_type === "shift_start") {
+      activeWorkStart = punchTime;
+    }
+
+    if (punch.punch_type === "lunch_start" && activeWorkStart) {
+      workedMilliseconds += punchTime - activeWorkStart;
+      activeWorkStart = null;
+    }
+
+    if (punch.punch_type === "lunch_end") {
+      activeWorkStart = punchTime;
+    }
+
+    if (punch.punch_type === "shift_end" && activeWorkStart) {
+      workedMilliseconds += punchTime - activeWorkStart;
+      activeWorkStart = null;
+    }
+  });
+
+  if (shift.status === "open" && activeWorkStart) {
+    workedMilliseconds += new Date() - activeWorkStart;
+  }
+
+  const hoursWorked = workedMilliseconds / (1000 * 60 * 60);
+  return Number(hoursWorked.toFixed(2));
 }
 
 export default employeesRouter;

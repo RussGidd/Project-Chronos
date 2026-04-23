@@ -25,15 +25,12 @@ export async function createShift(employeeNumber) {
   return result.rows[0];
 }
 
-export async function getTodayShiftsByEmployeeNumber(employeeNumber) {
+export async function getThisWeekShiftsByEmployeeNumber(employeeNumber) {
   const SQL = `
     SELECT *
     FROM shifts
     WHERE employee_number = $1
-      AND (
-        created_at >= CURRENT_TIMESTAMP - INTERVAL '24 hours'
-        OR updated_at >= CURRENT_TIMESTAMP - INTERVAL '24 hours'
-      )
+      AND shift_date >= DATE_TRUNC('week', CURRENT_DATE)::date
     ORDER BY created_at DESC;
   `;
 
@@ -51,6 +48,23 @@ export async function getRecentShiftsByEmployeeNumber(employeeNumber) {
   `;
 
   const result = await db.query(SQL, [employeeNumber]);
+  return result.rows;
+}
+
+export async function getShiftsByEmployeeNumberAndWeek(
+  employeeNumber,
+  weekStartDate,
+) {
+  const SQL = `
+    SELECT *
+    FROM shifts
+    WHERE employee_number = $1
+      AND shift_date >= $2::date
+      AND shift_date < $2::date + INTERVAL '7 days'
+    ORDER BY shift_date ASC, created_at ASC;
+  `;
+
+  const result = await db.query(SQL, [employeeNumber, weekStartDate]);
   return result.rows;
 }
 
