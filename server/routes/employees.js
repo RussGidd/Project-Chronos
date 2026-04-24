@@ -12,6 +12,7 @@ import {
 } from "../db/queries/shifts.js";
 import {
   getEmployeeTimePunchesByShiftId,
+  getTimePunchByIdForEmployee,
   getTimePunchesByShiftId,
   updateTimePunchTimeForEmployee,
 } from "../db/queries/timePunches.js";
@@ -209,7 +210,7 @@ async function updateEmployeePunch(request, response) {
   try {
     const employeeNumber = Number(request.params.employeeNumber);
     const punchId = Number(request.params.punchId);
-    const { hour, minute, period } = request.body;
+    const { hour, minute, period, timezoneOffsetMinutes } = request.body;
 
     if (!employeeNumber || !punchId) {
       return response.status(400).json({
@@ -236,6 +237,7 @@ async function updateEmployeePunch(request, response) {
 
     const hourNumber = Number(hour);
     const minuteNumber = Number(minute);
+    const timezoneOffsetNumber = Number(timezoneOffsetMinutes);
 
     if (
       !Number.isInteger(hourNumber) ||
@@ -244,10 +246,13 @@ async function updateEmployeePunch(request, response) {
       !Number.isInteger(minuteNumber) ||
       minuteNumber < 0 ||
       minuteNumber > 59 ||
-      !["AM", "PM"].includes(period)
+      !["AM", "PM"].includes(period) ||
+      !Number.isInteger(timezoneOffsetNumber) ||
+      timezoneOffsetNumber < -840 ||
+      timezoneOffsetNumber > 840
     ) {
       return response.status(400).json({
-        error: "Enter a valid hour, minute, and AM or PM.",
+        error: "Enter a valid hour, minute, AM or PM, and timezone offset.",
       });
     }
 
@@ -261,19 +266,30 @@ async function updateEmployeePunch(request, response) {
       hourForDatabase += 12;
     }
 
-    const timePunch = await updateTimePunchTimeForEmployee(
+    const existingTimePunch = await getTimePunchByIdForEmployee(
       punchId,
       employeeNumber,
-      hourForDatabase,
-      minuteNumber,
-      request.user.employeeNumber,
     );
 
-    if (!timePunch) {
+    if (!existingTimePunch) {
       return response.status(404).json({
         error: "Punch not found for this employee.",
       });
     }
+
+    const updatedPunchTime = buildUpdatedPunchTime(
+      existingTimePunch.punch_time,
+      hourForDatabase,
+      minuteNumber,
+      timezoneOffsetNumber,
+    );
+
+    const timePunch = await updateTimePunchTimeForEmployee(
+      punchId,
+      employeeNumber,
+      updatedPunchTime,
+      request.user.employeeNumber,
+    );
 
     return response.status(200).json({
       message: "Punch updated successfully.",
@@ -382,6 +398,27 @@ function calculateWorkedHours(shift, timePunches) {
 
   const hoursWorked = workedMilliseconds / (1000 * 60 * 60);
   return Number(hoursWorked.toFixed(2));
+}
+
+function buildUpdatedPunchTime(
+  existingPunchTime,
+  hour,
+  minute,
+  timezoneOffsetMinutes,
+) {
+  const existingUtcPunchTime = new Date(existingPunchTime);
+  const existingLocalPunchTime = new Date(
+    existingUtcPunchTime.getTime() - timezoneOffsetMinutes * 60 * 1000,
+  );
+
+  const localYear = existingLocalPunchTime.getUTCFullYear();
+  const localMonth = existingLocalPunchTime.getUTCMonth();
+  const localDay = existingLocalPunchTime.getUTCDate();
+
+  return new Date(
+    Date.UTC(localYear, localMonth, localDay, hour, minute) +
+      timezoneOffsetMinutes * 60 * 1000,
+  );
 }
 
 export default employeesRouter;

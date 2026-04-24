@@ -81,18 +81,29 @@ export async function getLatestTimePunchByShiftId(shiftId) {
   return result.rows[0] || null;
 }
 
+export async function getTimePunchByIdForEmployee(punchId, employeeNumber) {
+  const SQL = `
+    SELECT time_punches.*
+    FROM time_punches
+    JOIN shifts ON shifts.id = time_punches.shift_id
+    WHERE time_punches.id = $1
+      AND shifts.employee_number = $2;
+  `;
+
+  const result = await db.query(SQL, [punchId, employeeNumber]);
+  return result.rows[0] || null;
+}
+
 export async function updateTimePunchTimeForEmployee(
   punchId,
   employeeNumber,
-  hour,
-  minute,
+  punchTime,
   enteredByEmployeeNumber,
 ) {
   const SQL = `
     UPDATE time_punches
-    SET punch_time = DATE_TRUNC('day', punch_time)
-        + MAKE_INTERVAL(hours => $3::int, mins => $4::int),
-        entered_by_employee_number = $5,
+    SET punch_time = $3,
+        entered_by_employee_number = $4,
         updated_at = CURRENT_TIMESTAMP
     WHERE id = $1
       AND shift_id IN (
@@ -106,8 +117,7 @@ export async function updateTimePunchTimeForEmployee(
   const values = [
     punchId,
     employeeNumber,
-    hour,
-    minute,
+    punchTime,
     enteredByEmployeeNumber,
   ];
   const result = await db.query(SQL, values);

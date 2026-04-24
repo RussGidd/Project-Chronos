@@ -525,6 +525,7 @@ function App() {
             hour: Number(editPunchHour),
             minute: Number(editPunchMinute),
             period: editPunchPeriod,
+            timezoneOffsetMinutes: new Date().getTimezoneOffset(),
           }),
         },
       );
