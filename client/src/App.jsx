@@ -147,6 +147,37 @@ function App() {
     );
   }
 
+  async function loadEmployeeList(options = {}) {
+    const {
+      loadingMessage = "Loading employee list...",
+      successMessage = "Employee list loaded.",
+    } = options;
+
+    if (loadingMessage) {
+      setMessage(loadingMessage);
+    }
+
+    const response = await fetch(`${API_BASE}/api/employees`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const json = await getApiResponseData(response);
+
+    if (!response.ok) {
+      throw new Error(json.error || "Unable to load the employee list.");
+    }
+
+    setEmployees(json);
+
+    if (successMessage) {
+      setMessage(successMessage);
+    }
+
+    return json;
+  }
+
   function handleKeypadDigit(digit) {
     if (activeLoginField === "pin") {
       setPin(function (currentPin) {
@@ -358,23 +389,8 @@ function App() {
   }
 
   async function handleLoadEmployees() {
-    setMessage("Loading employee list...");
-
     try {
-      const response = await fetch(`${API_BASE}/api/employees`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const json = await getApiResponseData(response);
-
-      if (!response.ok) {
-        throw new Error(json.error || "Unable to load the employee list.");
-      }
-
-      setEmployees(json);
-      setMessage("Employee list loaded.");
+      await loadEmployeeList();
     } catch (error) {
       setMessage(error.message);
     }
@@ -497,6 +513,14 @@ function App() {
         throw new Error(json.error || "Unable to delete employee.");
       }
 
+      setEmployees(function (currentEmployees) {
+        return currentEmployees.filter(function (currentEmployee) {
+          return (
+            currentEmployee.employee_number !== listedEmployee.employee_number
+          );
+        });
+      });
+
       if (
         employeeHistory?.employee.employee_number ===
         listedEmployee.employee_number
@@ -507,7 +531,10 @@ function App() {
       }
 
       setPendingDeleteEmployeeNumber(null);
-      await handleLoadEmployees();
+      await loadEmployeeList({
+        loadingMessage: null,
+        successMessage: null,
+      });
       setMessage(json.message || `Employee deleted: ${fullName}`);
     } catch (error) {
       setMessage(error.message);
