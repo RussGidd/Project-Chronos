@@ -23,6 +23,8 @@ function App() {
   const [editPunchMinute, setEditPunchMinute] = useState("");
   const [editPunchPeriod, setEditPunchPeriod] = useState("AM");
   const [pendingPunchEdit, setPendingPunchEdit] = useState(null);
+  const [pendingDeleteEmployeeNumber, setPendingDeleteEmployeeNumber] =
+    useState(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -114,6 +116,30 @@ function App() {
     return punchLabels[punchType] || formatDisplayText(punchType);
   }
 
+  async function getApiResponseData(response) {
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      return await response.json();
+    }
+
+    const responseText = await response.text();
+
+    if (responseText.trim().startsWith("<!DOCTYPE") || responseText.includes("<html")) {
+      return {
+        error: "The app received an unexpected HTML response instead of API data.",
+      };
+    }
+
+    if (!responseText) {
+      return {};
+    }
+
+    return {
+      error: responseText,
+    };
+  }
+
   function canDeleteEmployee(listedEmployee) {
     return (
       listedEmployee.role !== "admin" &&
@@ -173,7 +199,7 @@ function App() {
         }),
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to log in.");
@@ -204,7 +230,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to start shift.");
@@ -233,7 +259,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to end shift.");
@@ -262,7 +288,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to clock out for lunch.");
@@ -291,7 +317,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to clock in from lunch.");
@@ -318,7 +344,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to load hours.");
@@ -341,7 +367,7 @@ function App() {
         },
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to load the employee list.");
@@ -376,7 +402,7 @@ function App() {
         }),
       });
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to create employee.");
@@ -426,7 +452,7 @@ function App() {
         },
       );
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to load employee weekly history.");
@@ -442,16 +468,16 @@ function App() {
     }
   }
 
+  function startDeleteConfirmation(employeeNumber) {
+    setPendingDeleteEmployeeNumber(employeeNumber);
+  }
+
+  function cancelDeleteConfirmation() {
+    setPendingDeleteEmployeeNumber(null);
+  }
+
   async function handleDeleteEmployee(listedEmployee) {
     const fullName = `${listedEmployee.first_name} ${listedEmployee.last_name}`;
-    const shouldDelete = window.confirm(
-      `Delete employee #${listedEmployee.employee_number} (${fullName})?\n\nThis will permanently remove the employee and all related shifts and punch records.`,
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
     setMessage("Deleting employee...");
 
     try {
@@ -465,7 +491,7 @@ function App() {
         },
       );
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to delete employee.");
@@ -480,6 +506,7 @@ function App() {
         cancelPunchEdit();
       }
 
+      setPendingDeleteEmployeeNumber(null);
       await handleLoadEmployees();
       setMessage(json.message || `Employee deleted: ${fullName}`);
     } catch (error) {
@@ -492,18 +519,19 @@ function App() {
     setEmployee(null);
     setEmployeeNumber("");
     setPin("");
-    setHoursThisWeek(null);
-    setEmployees([]);
+      setHoursThisWeek(null);
+      setEmployees([]);
     setNewEmployeePin("");
     setNewEmployeeFirstName("");
     setNewEmployeeNickname("");
     setNewEmployeeLastName("");
     setNewEmployeeRole("employee");
     setNewEmployeeStatus("active");
-    setHistoryEmployeeNumber("");
-    setEmployeeHistory(null);
-    cancelPunchEdit();
-    setMessage("Logged out.");
+      setHistoryEmployeeNumber("");
+      setEmployeeHistory(null);
+      setPendingDeleteEmployeeNumber(null);
+      cancelPunchEdit();
+      setMessage("Logged out.");
   }
 
   function beginPunchEdit(punch) {
@@ -582,7 +610,7 @@ function App() {
         },
       );
 
-      const json = await response.json();
+      const json = await getApiResponseData(response);
 
       if (!response.ok) {
         throw new Error(json.error || "Unable to update punch.");
@@ -743,15 +771,47 @@ function App() {
                       </button>
 
                       {canDeleteEmployee(listedEmployee) ? (
-                        <button
-                          className="danger-action"
-                          type="button"
-                          onClick={function () {
-                            handleDeleteEmployee(listedEmployee);
-                          }}
-                        >
-                          Delete Employee
-                        </button>
+                        pendingDeleteEmployeeNumber ===
+                        listedEmployee.employee_number ? (
+                          <div className="delete-confirmation">
+                            <p>
+                              Delete #{listedEmployee.employee_number}{" "}
+                              {listedEmployee.first_name}{" "}
+                              {listedEmployee.last_name}? Related shifts and
+                              punches will also be removed.
+                            </p>
+                            <div className="delete-confirmation-actions">
+                              <button
+                                className="danger-action"
+                                type="button"
+                                onClick={function () {
+                                  handleDeleteEmployee(listedEmployee);
+                                }}
+                              >
+                                Confirm Delete
+                              </button>
+                              <button
+                                className="secondary-action"
+                                type="button"
+                                onClick={cancelDeleteConfirmation}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            className="danger-action"
+                            type="button"
+                            onClick={function () {
+                              startDeleteConfirmation(
+                                listedEmployee.employee_number,
+                              );
+                            }}
+                          >
+                            Delete Employee
+                          </button>
+                        )
                       ) : (
                         <p className="helper-text employee-lock-note">
                           {listedEmployee.employee_number ===
