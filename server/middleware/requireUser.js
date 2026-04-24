@@ -1,6 +1,7 @@
 import { verifyToken } from "../utils/jwt.js";
+import { getEmployeeByEmployeeNumber } from "../db/queries/employees.js";
 
-export function requireUser(request, response, next) {
+export async function requireUser(request, response, next) {
   try {
     const authorization = request.headers.authorization;
 
@@ -13,6 +14,19 @@ export function requireUser(request, response, next) {
     const token = authorization.replace("Bearer ", "");
 
     const user = verifyToken(token);
+    const employee = await getEmployeeByEmployeeNumber(user.employeeNumber);
+
+    if (!employee) {
+      return response.status(401).json({
+        error: "Employee account was not found.",
+      });
+    }
+
+    if (employee.status !== "active") {
+      return response.status(403).json({
+        error: "This employee account is inactive.",
+      });
+    }
 
     request.user = user;
     next();

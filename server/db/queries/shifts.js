@@ -94,3 +94,33 @@ export async function completeShift(shiftId) {
   const result = await db.query(SQL, [shiftId]);
   return result.rows[0] || null;
 }
+
+export async function getShiftByIdForEmployee(shiftId, employeeNumber) {
+  const SQL = `
+    SELECT *
+    FROM shifts
+    WHERE id = $1
+      AND employee_number = $2;
+  `;
+
+  const result = await db.query(SQL, [shiftId, employeeNumber]);
+  return result.rows[0] || null;
+}
+
+export async function updateShiftAdminNoteForEmployee(
+  shiftId,
+  employeeNumber,
+  adminNote,
+) {
+  const SQL = `
+    UPDATE shifts
+    SET admin_note = $3,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $1
+      AND employee_number = $2
+    RETURNING *;
+  `;
+
+  const result = await db.query(SQL, [shiftId, employeeNumber, adminNote]);
+  return result.rows[0] || null;
+}

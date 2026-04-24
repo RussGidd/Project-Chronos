@@ -29,6 +29,7 @@ This keeps the MVP structure simple, easy to explain, and aligned with the curre
 - submit login credentials
 - display success or validation messages
 - present the Project Chronos visual identity on the login screen
+- block inactive employee accounts from entering the app
 
 **Notes:**
 - this is the shared entry point for both employee and admin users
@@ -68,6 +69,8 @@ This keeps the MVP structure simple, easy to explain, and aligned with the curre
 **Current responsibilities:**
 - load employee list
 - create employee accounts
+- display clear create-employee validation and result feedback
+- deactivate or reactivate employee accounts
 - select an employee from the list
 - load one employee's weekly history
 - navigate previous, current, and next weeks

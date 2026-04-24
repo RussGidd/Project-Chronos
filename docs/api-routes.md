@@ -7,8 +7,10 @@ Project Chronos currently uses a small role-aware Express API to support:
 - employee shift and lunch actions
 - employee weekly hours review
 - admin employee management
+- admin employee status updates
 - admin employee deletion
 - admin weekly history review
+- admin shift-note editing
 - admin punch-time correction
 
 The backend route groups currently implemented are:
@@ -72,6 +74,22 @@ Create a new employee account.
 
 ---
 
+### PATCH /api/employees/:employeeNumber/status
+Update one employee account between active and inactive.
+
+**Access:**
+- admin only
+
+**Purpose:**
+- let admins deactivate or reactivate employee accounts after creation
+- use the existing `employees.status` field
+- prevent admin account status changes in this UI
+
+**Tables used:**
+- employees
+
+---
+
 ### DELETE /api/employees/:employeeNumber
 Delete one employee account.
 
@@ -107,6 +125,40 @@ Get one employee's weekly admin history.
 - employees
 - shifts
 - time_punches
+
+---
+
+### PATCH /api/employees/:employeeNumber/shifts/:shiftId/note
+Create or update one short admin note for one shift.
+
+**Access:**
+- admin only
+
+**Purpose:**
+- attach a short shift-level note to one workday
+- keep admin comments attached to the overall shift instead of individual punches
+- prevent admins from editing another admin's shift notes
+
+**Tables used:**
+- employees
+- shifts
+
+---
+
+### DELETE /api/employees/:employeeNumber/shifts/:shiftId/note
+Delete one existing admin note from one shift.
+
+**Access:**
+- admin only
+
+**Purpose:**
+- remove an existing short shift-level admin note
+- keep note management inline in the weekly history view
+- prevent admins from editing another admin's shift notes
+
+**Tables used:**
+- employees
+- shifts
 
 ---
 
@@ -220,6 +272,8 @@ End the current shift.
 ## Validation Notes
 
 The current backend enforces rules such as:
+- inactive employees cannot log in
+- inactive employees cannot use protected routes with an existing token
 - an employee cannot start a new shift if an open shift already exists
 - an employee cannot start lunch without an open shift
 - an employee cannot start lunch twice in a row

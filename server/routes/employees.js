@@ -6,10 +6,13 @@ import {
   deleteEmployeeByEmployeeNumber,
   getAllEmployees,
   getSafeEmployeeByEmployeeNumber,
+  updateEmployeeStatusByEmployeeNumber,
 } from "../db/queries/employees.js";
 import {
+  getShiftByIdForEmployee,
   getShiftsByEmployeeNumberAndWeek,
   getThisWeekShiftsByEmployeeNumber,
+  updateShiftAdminNoteForEmployee,
 } from "../db/queries/shifts.js";
 import {
   getEmployeeTimePunchesByShiftId,
@@ -23,10 +26,25 @@ const employeesRouter = express.Router();
 employeesRouter.get("/", requireAdmin, getEmployees);
 employeesRouter.post("/", requireAdmin, addEmployee);
 employeesRouter.delete("/:employeeNumber", requireAdmin, removeEmployee);
+employeesRouter.patch(
+  "/:employeeNumber/status",
+  requireAdmin,
+  updateEmployeeStatus,
+);
 employeesRouter.get(
   "/:employeeNumber/history",
   requireAdmin,
   getEmployeeHistory,
+);
+employeesRouter.patch(
+  "/:employeeNumber/shifts/:shiftId/note",
+  requireAdmin,
+  updateShiftNote,
+);
+employeesRouter.delete(
+  "/:employeeNumber/shifts/:shiftId/note",
+  requireAdmin,
+  deleteShiftNote,
 );
 employeesRouter.patch(
   "/:employeeNumber/punches/:punchId",
@@ -115,6 +133,53 @@ async function removeEmployee(request, response) {
   } catch (error) {
     return response.status(500).json({
       error: "Failed to delete employee.",
+    });
+  }
+}
+
+async function updateEmployeeStatus(request, response) {
+  try {
+    const employeeNumber = Number(request.params.employeeNumber);
+    const { status } = request.body;
+
+    if (!employeeNumber) {
+      return response.status(400).json({
+        error: "A valid employee number is required.",
+      });
+    }
+
+    if (!["active", "inactive"].includes(status)) {
+      return response.status(400).json({
+        error: "Status must be active or inactive.",
+      });
+    }
+
+    const employee = await getSafeEmployeeByEmployeeNumber(employeeNumber);
+
+    if (!employee) {
+      return response.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    if (employee.role === "admin") {
+      return response.status(403).json({
+        error: "Admin account status cannot be changed here.",
+      });
+    }
+
+    const updatedEmployee = await updateEmployeeStatusByEmployeeNumber(
+      employeeNumber,
+      status,
+    );
+
+    return response.status(200).json({
+      message: `${updatedEmployee.first_name} ${updatedEmployee.last_name} is now ${updatedEmployee.status}.`,
+      employee: updatedEmployee,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      error: "Failed to update employee status.",
     });
   }
 }
@@ -249,6 +314,125 @@ async function getMyHoursThisWeek(request, response) {
   } catch (error) {
     return response.status(500).json({
       error: "Unable to get hours for this week.",
+    });
+  }
+}
+
+async function updateShiftNote(request, response) {
+  try {
+    const employeeNumber = Number(request.params.employeeNumber);
+    const shiftId = Number(request.params.shiftId);
+    const trimmedNote = request.body.note?.trim();
+
+    if (!employeeNumber || !shiftId) {
+      return response.status(400).json({
+        error: "A valid employee number and shift ID are required.",
+      });
+    }
+
+    if (!trimmedNote) {
+      return response.status(400).json({
+        error: "Enter a shift note before saving.",
+      });
+    }
+
+    if (trimmedNote.length > 120) {
+      return response.status(400).json({
+        error: "Shift notes must be 120 characters or fewer.",
+      });
+    }
+
+    const employee = await getSafeEmployeeByEmployeeNumber(employeeNumber);
+
+    if (!employee) {
+      return response.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    if (
+      employee.role === "admin" &&
+      employee.employee_number !== request.user.employeeNumber
+    ) {
+      return response.status(403).json({
+        error: "Admins cannot edit another admin's shift notes.",
+      });
+    }
+
+    const shift = await getShiftByIdForEmployee(shiftId, employeeNumber);
+
+    if (!shift) {
+      return response.status(404).json({
+        error: "Shift not found for this employee.",
+      });
+    }
+
+    const updatedShift = await updateShiftAdminNoteForEmployee(
+      shiftId,
+      employeeNumber,
+      trimmedNote,
+    );
+
+    return response.status(200).json({
+      message: "Shift note saved successfully.",
+      shift: updatedShift,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      error: "Unable to save shift note.",
+    });
+  }
+}
+
+async function deleteShiftNote(request, response) {
+  try {
+    const employeeNumber = Number(request.params.employeeNumber);
+    const shiftId = Number(request.params.shiftId);
+
+    if (!employeeNumber || !shiftId) {
+      return response.status(400).json({
+        error: "A valid employee number and shift ID are required.",
+      });
+    }
+
+    const employee = await getSafeEmployeeByEmployeeNumber(employeeNumber);
+
+    if (!employee) {
+      return response.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    if (
+      employee.role === "admin" &&
+      employee.employee_number !== request.user.employeeNumber
+    ) {
+      return response.status(403).json({
+        error: "Admins cannot edit another admin's shift notes.",
+      });
+    }
+
+    const shift = await getShiftByIdForEmployee(shiftId, employeeNumber);
+
+    if (!shift) {
+      return response.status(404).json({
+        error: "Shift not found for this employee.",
+      });
+    }
+
+    const updatedShift = await updateShiftAdminNoteForEmployee(
+      shiftId,
+      employeeNumber,
+      null,
+    );
+
+    return response.status(200).json({
+      message: "Shift note deleted successfully.",
+      shift: updatedShift,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      error: "Unable to delete shift note.",
     });
   }
 }

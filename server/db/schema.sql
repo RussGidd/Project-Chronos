@@ -20,6 +20,7 @@ CREATE TABLE shifts (
     employee_number INTEGER NOT NULL REFERENCES employees(employee_number) ON DELETE CASCADE,
     shift_date DATE NOT NULL DEFAULT CURRENT_DATE,
     status VARCHAR(20) NOT NULL DEFAULT 'open',
+    admin_note VARCHAR(120),
     total_hours NUMERIC(5,2),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

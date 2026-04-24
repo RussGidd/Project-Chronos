@@ -16,6 +16,9 @@ function App() {
   const [newEmployeeLastName, setNewEmployeeLastName] = useState("");
   const [newEmployeeRole, setNewEmployeeRole] = useState("employee");
   const [newEmployeeStatus, setNewEmployeeStatus] = useState("active");
+  const [createEmployeeMessage, setCreateEmployeeMessage] = useState("");
+  const [createEmployeeMessageType, setCreateEmployeeMessageType] =
+    useState("info");
   const [historyEmployeeNumber, setHistoryEmployeeNumber] = useState("");
   const [employeeHistory, setEmployeeHistory] = useState(null);
   const [editingPunchId, setEditingPunchId] = useState(null);
@@ -23,6 +26,8 @@ function App() {
   const [editPunchMinute, setEditPunchMinute] = useState("");
   const [editPunchPeriod, setEditPunchPeriod] = useState("AM");
   const [pendingPunchEdit, setPendingPunchEdit] = useState(null);
+  const [editingShiftNoteId, setEditingShiftNoteId] = useState(null);
+  const [shiftNoteDraft, setShiftNoteDraft] = useState("");
   const [pendingDeleteEmployeeNumber, setPendingDeleteEmployeeNumber] =
     useState(null);
 
@@ -61,7 +66,7 @@ function App() {
     )} ${editPunchPeriod}`;
   }
 
-  function canEditSelectedEmployeePunches() {
+  function canManageSelectedEmployeeHistory() {
     if (!employeeHistory) {
       return false;
     }
@@ -70,6 +75,10 @@ function App() {
       employeeHistory.employee.role !== "admin" ||
       employeeHistory.employee.employee_number === employee.employeeNumber
     );
+  }
+
+  function getShiftNoteText(shift) {
+    return shift.admin_note?.trim() || "";
   }
 
   function formatDate(dateValue) {
@@ -116,6 +125,11 @@ function App() {
     return punchLabels[punchType] || formatDisplayText(punchType);
   }
 
+  function setCreateEmployeeFeedback(type, text) {
+    setCreateEmployeeMessageType(type);
+    setCreateEmployeeMessage(text);
+  }
+
   async function getApiResponseData(response) {
     const contentType = response.headers.get("content-type") || "";
 
@@ -145,6 +159,10 @@ function App() {
       listedEmployee.role !== "admin" &&
       listedEmployee.employee_number !== employee.employeeNumber
     );
+  }
+
+  function canUpdateEmployeeStatus(listedEmployee) {
+    return listedEmployee.role !== "admin";
   }
 
   async function loadEmployeeList(options = {}) {
@@ -242,6 +260,8 @@ function App() {
       setEmployees([]);
       setEmployeeHistory(null);
       cancelPunchEdit();
+      cancelShiftNoteEdit();
+      setCreateEmployeeFeedback("info", "");
       setMessage(json.message);
       setPin("");
     } catch (error) {
@@ -399,7 +419,16 @@ function App() {
   async function handleCreateEmployee(event) {
     event.preventDefault();
 
+    if (!newEmployeePin || !newEmployeeFirstName || !newEmployeeLastName) {
+      setCreateEmployeeFeedback(
+        "error",
+        "PIN, first name, and last name are required before creating an employee.",
+      );
+      return;
+    }
+
     setMessage("Creating employee...");
+    setCreateEmployeeFeedback("info", "Creating employee...");
 
     try {
       const response = await fetch(`${API_BASE}/api/employees`, {
@@ -433,8 +462,13 @@ function App() {
 
       await handleLoadEmployees();
       await handleLoadEmployeeHistory(json.employee_number);
+      setCreateEmployeeFeedback(
+        "success",
+        `Employee created: ${json.first_name} ${json.last_name}`,
+      );
       setMessage(`Employee created: ${json.first_name} ${json.last_name}`);
     } catch (error) {
+      setCreateEmployeeFeedback("error", error.message);
       setMessage(error.message);
     }
   }
@@ -477,6 +511,7 @@ function App() {
       setHistoryEmployeeNumber(String(employeeNumberToLoad));
       setEmployeeHistory(json);
       cancelPunchEdit();
+      cancelShiftNoteEdit();
       setMessage("Employee weekly history loaded.");
     } catch (error) {
       setEmployeeHistory(null);
@@ -528,6 +563,7 @@ function App() {
         setHistoryEmployeeNumber("");
         setEmployeeHistory(null);
         cancelPunchEdit();
+        cancelShiftNoteEdit();
       }
 
       setPendingDeleteEmployeeNumber(null);
@@ -536,6 +572,66 @@ function App() {
         successMessage: null,
       });
       setMessage(json.message || `Employee deleted: ${fullName}`);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function handleUpdateEmployeeStatus(listedEmployee, nextStatus) {
+    setMessage("Updating employee status...");
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/employees/${listedEmployee.employee_number}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            status: nextStatus,
+          }),
+        },
+      );
+
+      const json = await getApiResponseData(response);
+
+      if (!response.ok) {
+        throw new Error(json.error || "Unable to update employee status.");
+      }
+
+      setEmployees(function (currentEmployees) {
+        return currentEmployees.map(function (currentEmployee) {
+          if (
+            currentEmployee.employee_number === listedEmployee.employee_number
+          ) {
+            return {
+              ...currentEmployee,
+              status: nextStatus,
+            };
+          }
+
+          return currentEmployee;
+        });
+      });
+
+      if (
+        employeeHistory?.employee.employee_number ===
+        listedEmployee.employee_number
+      ) {
+        await handleLoadEmployeeHistory(listedEmployee.employee_number);
+      } else {
+        await loadEmployeeList({
+          loadingMessage: null,
+          successMessage: null,
+        });
+      }
+
+      setMessage(
+        json.message ||
+          `${listedEmployee.first_name} ${listedEmployee.last_name} is now ${nextStatus}.`,
+      );
     } catch (error) {
       setMessage(error.message);
     }
@@ -558,11 +654,13 @@ function App() {
       setEmployeeHistory(null);
       setPendingDeleteEmployeeNumber(null);
       cancelPunchEdit();
+      cancelShiftNoteEdit();
+      setCreateEmployeeFeedback("info", "");
       setMessage("Logged out.");
   }
 
   function beginPunchEdit(punch) {
-    if (!canEditSelectedEmployeePunches()) {
+    if (!canManageSelectedEmployeeHistory()) {
       return;
     }
 
@@ -581,6 +679,101 @@ function App() {
     setEditPunchMinute("");
     setEditPunchPeriod("AM");
     setPendingPunchEdit(null);
+  }
+
+  function beginShiftNoteEdit(shift) {
+    if (!canManageSelectedEmployeeHistory()) {
+      return;
+    }
+
+    setEditingShiftNoteId(shift.id);
+    setShiftNoteDraft(getShiftNoteText(shift));
+  }
+
+  function cancelShiftNoteEdit() {
+    setEditingShiftNoteId(null);
+    setShiftNoteDraft("");
+  }
+
+  async function submitShiftNoteEdit(shift) {
+    if (!employeeHistory) {
+      return;
+    }
+
+    const trimmedNote = shiftNoteDraft.trim();
+
+    if (!trimmedNote) {
+      setMessage("Enter a shift note before saving.");
+      return;
+    }
+
+    setMessage("Saving shift note...");
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/employees/${employeeHistory.employee.employee_number}/shifts/${shift.id}/note`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            note: trimmedNote,
+          }),
+        },
+      );
+
+      const json = await getApiResponseData(response);
+
+      if (!response.ok) {
+        throw new Error(json.error || "Unable to save shift note.");
+      }
+
+      const employeeNumberToLoad = employeeHistory.employee.employee_number;
+      const weekStart = employeeHistory.week.weekStart;
+
+      cancelShiftNoteEdit();
+      await handleLoadEmployeeHistory(employeeNumberToLoad, weekStart);
+      setMessage("Shift note saved successfully.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function handleDeleteShiftNote(shift) {
+    if (!employeeHistory) {
+      return;
+    }
+
+    setMessage("Deleting shift note...");
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/employees/${employeeHistory.employee.employee_number}/shifts/${shift.id}/note`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const json = await getApiResponseData(response);
+
+      if (!response.ok) {
+        throw new Error(json.error || "Unable to delete shift note.");
+      }
+
+      const employeeNumberToLoad = employeeHistory.employee.employee_number;
+      const weekStart = employeeHistory.week.weekStart;
+
+      cancelShiftNoteEdit();
+      await handleLoadEmployeeHistory(employeeNumberToLoad, weekStart);
+      setMessage("Shift note deleted successfully.");
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   function preparePunchEdit(event, punch) {
@@ -849,6 +1042,29 @@ function App() {
                               : ""}
                         </p>
                       )}
+
+                      {canUpdateEmployeeStatus(listedEmployee) ? (
+                        <button
+                          className="secondary-action"
+                          type="button"
+                          onClick={function () {
+                            handleUpdateEmployeeStatus(
+                              listedEmployee,
+                              listedEmployee.status === "active"
+                                ? "inactive"
+                                : "active",
+                            );
+                          }}
+                        >
+                          {listedEmployee.status === "active"
+                            ? "Set Inactive"
+                            : "Set Active"}
+                        </button>
+                      ) : (
+                        <p className="helper-text employee-lock-note">
+                          Admin account status cannot be changed here.
+                        </p>
+                      )}
                     </div>
                   </li>
                 );
@@ -934,9 +1150,10 @@ function App() {
                 <p>No punch details were found for this week.</p>
               ) : (
                 <>
-                  {canEditSelectedEmployeePunches() && (
+                  {canManageSelectedEmployeeHistory() && (
                     <p className="helper-text">
-                      Click a punch time below to review and edit it.
+                      Click a punch time below to review and edit it. Shift
+                      notes can be created underneath each shift.
                     </p>
                   )}
 
@@ -1051,7 +1268,7 @@ function App() {
                                     <button
                                       className="punch-row"
                                       type="button"
-                                      disabled={!canEditSelectedEmployeePunches()}
+                                      disabled={!canManageSelectedEmployeeHistory()}
                                       onClick={function () {
                                         beginPunchEdit(punch);
                                       }}
@@ -1066,7 +1283,74 @@ function App() {
                                 );
                               })}
                             </ul>
-                          )}
+                          )} 
+                          <div className="shift-note-row">
+                            <span>
+                              Notes -{" "}
+                              {getShiftNoteText(shift) ||
+                                "No admin note for this shift."}
+                            </span>
+
+                            {canManageSelectedEmployeeHistory() &&
+                              (editingShiftNoteId === shift.id ? (
+                                <div className="shift-note-editor">
+                                  <label htmlFor={`shift-note-${shift.id}`}>
+                                    Shift Note
+                                  </label>
+                                  <textarea
+                                    id={`shift-note-${shift.id}`}
+                                    maxLength="120"
+                                    rows="3"
+                                    value={shiftNoteDraft}
+                                    onChange={function (event) {
+                                      setShiftNoteDraft(event.target.value);
+                                    }}
+                                  />
+                                  <p className="helper-text shift-note-count">
+                                    {shiftNoteDraft.length}/120
+                                  </p>
+                                  <div className="shift-note-actions">
+                                    <button
+                                      type="button"
+                                      onClick={function () {
+                                        submitShiftNoteEdit(shift);
+                                      }}
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      className="secondary-action"
+                                      type="button"
+                                      onClick={cancelShiftNoteEdit}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="shift-note-actions">
+                                  <button
+                                    type="button"
+                                    onClick={function () {
+                                      beginShiftNoteEdit(shift);
+                                    }}
+                                  >
+                                    {getShiftNoteText(shift) ? "Edit" : "Create"}
+                                  </button>
+                                  {getShiftNoteText(shift) && (
+                                    <button
+                                      className="secondary-action"
+                                      type="button"
+                                      onClick={function () {
+                                        handleDeleteShiftNote(shift);
+                                      }}
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                          </div>
                         </li>
                       );
                     })}
@@ -1127,6 +1411,12 @@ function App() {
 
         <section className="secondary-section">
           <h3>Create Employee</h3>
+
+          {createEmployeeMessage && (
+            <div className={`panel-message ${createEmployeeMessageType}`}>
+              {createEmployeeMessage}
+            </div>
+          )}
 
           <form onSubmit={handleCreateEmployee}>
             <div>

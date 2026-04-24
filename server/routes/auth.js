@@ -25,6 +25,12 @@ async function login(request, response) {
       });
     }
 
+    if (employee.status !== "active") {
+      return response.status(403).json({
+        error: "This employee account is inactive.",
+      });
+    }
+
     const isValidPin = await bcrypt.compare(pin, employee.pin_hash);
 
     if (!isValidPin) {
