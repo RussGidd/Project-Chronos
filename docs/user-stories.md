@@ -27,14 +27,11 @@ As an employee, I want to clock back in from lunch so that I can continue my shi
 ### End Shift
 As an employee, I want to end my shift so that my total hours for the day are recorded correctly.
 
-### View Today’s Hours
-As an employee, I want to view my hours worked for today so that I can confirm my punches and monitor my time.
-
 ### View This Week’s Hours
 As an employee, I want to view my hours worked for the current week so that I can keep track of my total time and identify possible mistakes early.
 
 ### See Punch History
-As an employee, I want to see my punch history for the day or week so that I can understand how my hours were calculated.
+As an employee, I want to see my punch history for the week so that I can understand how my hours were calculated.
 
 ---
 
@@ -53,7 +50,10 @@ As an administrator, I want to see whether employees are clocked in, on lunch, o
 As an administrator, I want to sort employees by hours worked, hire date, or name so that I can review labor distribution more clearly.
 
 ### View Employee Detail
-As an administrator, I want to open a single employee detail page so that I can review that employee’s profile and punch history.
+As an administrator, I want to open a single employee detail page so that I can review that employee’s profile, weekly hours, and punch history.
+
+### Browse Employee Weekly History
+As an administrator, I want to move backward and forward through an employee's weekly history so that I can review one Monday-through-Sunday week at a time.
 
 ### Create Employee Account
 As an administrator, I want to create employee accounts so that new workers can use the timekeeping system.
@@ -69,6 +69,9 @@ As an administrator, I want to activate or deactivate employee accounts so that 
 
 ### Correct Punch Records
 As an administrator, I want to add, edit, or correct punch records so that timekeeping mistakes can be fixed.
+
+### Protect Admin Punch Records
+As an administrator, I do not want other admins editing my punch records so that admin timekeeping remains protected.
 
 ### Review Punch Problems
 As an administrator, I want to identify invalid or unusual punch behavior so that timekeeping issues can be reviewed and resolved.

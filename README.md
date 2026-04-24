@@ -7,7 +7,7 @@ Author: Russell Giddens
 
 ## 🚀 30-Second Elevator Pitch
 
-Project Chronos is a full-stack timekeeping management application built for small businesses that need a cleaner and more reliable way to track employee work hours. Employees use a simple kiosk-style interface to begin shifts, start and end lunch, end shifts, and view their hours for the day or week. Employees with elevated permissions can access secure admin views to create employee accounts, monitor employee status in real time, review shift and time punch history, sort workers by hours worked, and correct timekeeping errors. The long-term goal is to support fairer scheduling decisions by giving managers accurate labor data instead of guesswork.
+Project Chronos is a full-stack timekeeping management application built for small businesses that need a cleaner and more reliable way to track employee work hours. Employees can log in with an employee number and PIN to begin shifts, clock out and back in for lunch, end shifts, and view lunch-aware weekly hour totals with punch details and running time while a shift is open. Employees with admin permissions can access protected management views to load employees, create employee accounts, review an employee's weekly shift and punch history, navigate between work weeks, view weekly and daily hour totals, and correct existing punch times inline. Chronos is designed as a role-aware full-stack system today, with a long-term goal of growing into a fuller labor management tool that helps managers review hours and make fairer scheduling decisions with accurate timekeeping data.
 
 ---
 
@@ -27,7 +27,6 @@ These are the core features planned for the minimum viable product.
 - End Shift
 
 ### 3. Employee Hours Page
-- View hours worked today
 - View hours worked for the current week
 - View shift summaries and time punches
 - Show running totals based on shift and punch data
@@ -41,22 +40,20 @@ These are the core features planned for the minimum viable product.
 
 ### 5. Admin Authentication and Authorization
 - Employees with elevated roles can access admin views
-- Admin access is protected separately from the main kiosk flow
+- Admin access is protected with role-based authorization
 - Role-based authorization controls access to management features
 
 ### 6. Admin Dashboard
 - View all employees
-- See whether an employee is currently clocked in, on lunch, or clocked out
-- See current day and week hours in real time
-- Sort employees by hours worked, date of hire, or name
-- Access employee creation flow
+- Create employee accounts
+- Select an employee to review weekly history
+- View weekly and daily hour totals for selected employees
 
 ### 7. Admin Employee Detail and Employee Creation
 - View employee profile details
 - View shifts and time punches
-- Add, edit, or correct timekeeping records
-- Activate or deactivate employees
-- Reset employee PIN if needed
+- Edit existing punch times with confirmation
+- Navigate employee history by week
 - Create new employee accounts
 
 ---

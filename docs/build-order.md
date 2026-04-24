@@ -91,9 +91,9 @@ This is the heart of the MVP and should work before dashboards are built.
 Build the employee hours view.
 
 Tasks:
-- fetch today’s punch records
 - fetch current week punch records
 - calculate total hours
+- group weekly hours by day
 - display running totals if employee is still clocked in
 
 Why sixth:
@@ -122,7 +122,10 @@ Build detailed admin employee management.
 
 Tasks:
 - show employee profile
-- show punch history
+- show weekly hour totals
+- group weekly hours by day
+- add previous, current, and next week navigation
+- show punch history for the selected week
 - allow employee edits
 - allow PIN reset
 - allow activate/deactivate

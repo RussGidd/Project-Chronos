@@ -50,6 +50,23 @@ Get a single employee profile.
 
 ---
 
+### GET /api/employees/:employeeNumber/history?weekStart=YYYY-MM-DD
+Get one employee's admin history for a single Monday-through-Sunday week.
+
+**Purpose:**
+- show the employee profile with one week of shifts and punches
+- total the employee's hours for the selected week
+- group weekly hours by day
+- support previous, current, and next week navigation
+- stop previous navigation at the week the employee was created
+
+**Tables used:**
+- employees
+- shifts
+- time_punches
+
+---
+
 ### POST /api/employees
 Create a new employee account.
 
@@ -165,35 +182,21 @@ Get all time punches for one shift.
 
 **Purpose:**
 - show punch history for one shift
-- support employee hours page
 - support admin employee detail page
+- include admin-only notes when an admin reviews punch history
 
 **Tables used:**
 - time_punches
 
 ---
 
-### PATCH /api/time-punches/:timePunchId
-Update a time punch.
+### PATCH /api/employees/:employeeNumber/punches/:timePunchId
+Update one time punch for one employee.
 
 **Purpose:**
-- allow admin to correct a punch time
-- allow admin to add notes for corrections
-
-**Tables used:**
-- time_punches
-
----
-
-## Hours Routes
-
-### GET /api/hours/:employeeNumber/today
-Get today’s shift summary, punch summary, and total hours for one employee.
-
-**Purpose:**
-- show employee hours for the current day
-- show running hours if employee is still clocked in
-- combine shift and punch data for easier frontend display
+- allow admin to correct an employee punch time
+- prevent admins from editing another admin's punches
+- preserve the punch date while changing the hour, minute, and AM or PM
 
 **Tables used:**
 - employees
@@ -202,13 +205,17 @@ Get today’s shift summary, punch summary, and total hours for one employee.
 
 ---
 
-### GET /api/hours/:employeeNumber/week
-Get current week shift summary, punch summary, and total hours for one employee.
+## Hours Routes
+
+### GET /api/employees/me/hours/week
+Get the logged-in employee’s current week shift summary, daily totals, and total weekly hours.
 
 **Purpose:**
-- show employee hours for the week
+- show employee hours for the week starting Monday at midnight
+- show daily totals such as Monday, Tuesday, and Wednesday
+- show "and counting" when an employee still has an open shift
 - support employee hours page
-- support admin weekly review
+- keep admin-only punch notes out of the employee-facing response
 
 **Tables used:**
 - employees

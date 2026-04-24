@@ -61,7 +61,7 @@ Stores each punch event connected to a specific shift.
 | punch_type | VARCHAR(20) NOT NULL | shift_start, lunch_start, lunch_end, shift_end |
 | punch_time | TIMESTAMP NOT NULL | Date and time of the punch |
 | entered_by_employee_number | INTEGER REFERENCES employees(employee_number) ON DELETE SET NULL | Employee or admin who entered or corrected the punch |
-| notes | TEXT | Optional note for manual corrections |
+| notes | TEXT | Optional admin-only note for manual corrections |
 | created_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record creation timestamp |
 | updated_at | TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP | Record update timestamp |
 
@@ -74,6 +74,7 @@ Stores each punch event connected to a specific shift.
 - One shift can have many time punches
 - One time punch belongs to exactly one shift
 - One employee may optionally create or correct many time punches if acting in an admin role
+- Time punch notes are intended for admin context and should not be shown on employee-facing hour views
 
 ---
 

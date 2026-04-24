@@ -53,11 +53,10 @@ Allows an employee to view their hours, shifts, and time punches.
 
 **Responsibilities:**
 - show employee name and employee number
-- show today’s shift summary
-- show today’s time punches
-- show today’s total hours
 - show current week shift summary
+- show current week daily totals
 - show current week total hours
+- show running totals if the employee is still clocked in
 - allow return to the kiosk page
 
 **Notes:**
@@ -158,14 +157,20 @@ Allows admin to review one employee record in detail.
 - show employee profile details
 - show employee status and role
 - show employee date of hire
-- show employee shifts
-- show employee time punches
+- show employee weekly hours from Monday at midnight through Sunday night
+- show daily totals for the selected week
+- show employee shifts and time punches for the selected week
+- allow previous week navigation until the employee creation week
+- allow next week navigation until the current week
+- allow a current week button between previous and next navigation
+- allow punch rows to become inline edit fields when an editable punch is clicked
+- confirm punch time changes before saving
 - allow admin to:
   - edit employee profile information
   - reset employee PIN
   - change employee role
   - activate or deactivate employee
-  - add or correct a time punch
+  - add or correct an employee time punch
 - allow return to dashboard
 
 **Notes:**
