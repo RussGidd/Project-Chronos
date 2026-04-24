@@ -43,7 +43,6 @@ const corsOptions = {
 
 app.use(express.json());
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 
 app.get("/connect", makeContact);
 app.get("/seed", seed);
