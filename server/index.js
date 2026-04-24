@@ -52,6 +52,7 @@ app.get("/seed", seed);
 app.use("/api/auth", authRouter);
 app.use("/api/employees", employeesRouter);
 app.use("/api/shifts", shiftsRouter);
+app.use("/api", handleMissingApiRoute);
 
 async function seed(req, res) {
   try {
@@ -70,6 +71,12 @@ async function makeContact(request, response) {
   } catch (error) {
     response.status(500).json(error.message);
   }
+}
+
+function handleMissingApiRoute(request, response) {
+  return response.status(404).json({
+    error: `API route not found: ${request.method} ${request.originalUrl}`,
+  });
 }
 
 await db.connect();
