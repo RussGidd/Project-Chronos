@@ -13,12 +13,13 @@ Project Chronos is a full-stack timekeeping management application built for sma
 
 ## 🎯 Core MVP Features
 
-These are the core features planned for the minimum viable product.
+These are the core features currently implemented in the Project Chronos MVP.
 
-### 1. Employee Authentication
+### 1. Authentication and Role-Based Access
 - Employees log in with a system-generated employee number and PIN
-- Employees do not create their own accounts
-- Employees with admin-level roles can create employee accounts
+- JWT authentication is used for protected API access
+- Employees and admins are managed from the same employees table
+- Admin access is controlled through the employee role
 
 ### 2. Employee Timekeeping Actions
 - Begin Shift
@@ -26,45 +27,38 @@ These are the core features planned for the minimum viable product.
 - Clock In from Lunch
 - End Shift
 
-### 3. Employee Hours Page
-- View hours worked for the current week
-- View shift summaries and time punches
-- Show running totals based on shift and punch data
+### 3. Employee Weekly Hours View
+- View lunch-aware hours worked for the current week
+- View daily totals, total weekly hours, and punch details
+- Show running time while a shift is still open
 
-### 4. Punch and Shift Validation Rules
-- Prevent invalid actions such as lunch before shift start
-- Prevent ending a shift before beginning one
-- Prevent punches that do not belong to a valid shift
-- Allow certain edge cases with warning messages for admin review
-- Surface possible discrepancies instead of silently failing
+### 4. Shift and Lunch Validation Rules
+- Prevent beginning a new shift when an open shift already exists
+- Prevent lunch actions without an open shift
+- Prevent duplicate lunch-start actions
+- Prevent ending a shift while the employee is still on lunch
 
-### 5. Admin Authentication and Authorization
-- Employees with elevated roles can access admin views
-- Admin access is protected with role-based authorization
-- Role-based authorization controls access to management features
-
-### 6. Admin Dashboard
+### 5. Admin Employee Management
 - View all employees
 - Create employee accounts
 - Select an employee to review weekly history
-- View weekly and daily hour totals for selected employees
+- View weekly and daily hour totals for a selected employee
 
-### 7. Admin Employee Detail and Employee Creation
-- View employee profile details
-- View shifts and time punches
-- Edit existing punch times with confirmation
+### 6. Admin Employee Detail and Punch Correction
+- View employee profile details and weekly history
 - Navigate employee history by week
-- Create new employee accounts
+- Edit existing punch times with confirmation
+- Prevent admins from editing another admin's punches
 
 ---
 
 ## 🌟 Stretch Goal Features
 
-These features are planned after the MVP is working.
+These are reasonable expansion ideas beyond the current implemented MVP.
 
 - Scheduling logic based on seniority or lowest weekly hours
 - Expanded role permissions for shift managers and general managers
-- Visual admin alerts for missed lunch or punch issues
+- Admin tools to add missing punches, not just edit existing ones
 - Manager comments or notes on employee records
 - Edit history for changed punches
 - Leave, vacation, medical, or restricted employee statuses
@@ -105,34 +99,28 @@ Mermaid ER diagram is available here:
 
 ## 🔌 API Route Planning
 
-The backend route plan includes:
+The current backend is organized around these implemented route groups:
 - Auth
 - Employees
 - Shifts
-- Time Punches
-- Hours
-- Admin
 
-Full route planning documentation is available here:  
+Current backend route documentation is available here:  
 [API Routes](docs/api-routes.md)
 
 ---
 
 ## 🧩 Frontend Planning
 
-Planned MVP pages include:
-- Home / Kiosk Page
-- Employee Hours Page
-- Admin Login Page
-- Admin Dashboard
-- Admin Employee Detail Page
-- Admin Create Employee Page
+The current frontend is intentionally built as one role-aware React application:
+- Login and kiosk-style employee entry
+- Employee shift actions and weekly hours view
+- Admin employee list, weekly history review, and employee creation tools
 
-Wireframe documentation is available here:  
+Early wireframe documentation is available here:  
 [Wireframes](wireframes/README.md)
 
-Frontend route planning is available here:  
-[Frontend Routes](docs/frontend-routes.md)
+Current frontend structure notes are available here:  
+[Frontend Structure](docs/frontend-routes.md)
 
 ---
 
@@ -144,10 +132,10 @@ Current planning includes:
 - README pitch documentation
 - database schema design
 - Mermaid ER diagram
-- API route planning
+- API route documentation
 - user stories
 - wireframe planning
-- frontend route planning
+- frontend structure documentation
 - build order planning
 - project folder structure
 
@@ -157,20 +145,76 @@ Since this is a solo capstone project, tasks are being organized by feature prio
 
 ## 📂 Repository Structure
 
-    Project-Chronos/
-    │
+```text
+Project-Chronos/
+├── README.md
+├── package.json
+├── package-lock.json
+├── .gitignore
+│
+├── client/
+│   ├── README.md
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js
+│   ├── eslint.config.js
+│   ├── index.html
+│   │
+│   ├── public/
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   │
+│   └── src/
+│       ├── App.jsx
+│       ├── App.css
+│       ├── index.css
+│       ├── main.jsx
+│       │
+│       └── assets/
+│           └── earth-from-space.webp
+│
+├── server/
+│   ├── index.js
+│   ├── package.json
+│   ├── package-lock.json
+│   │
+│   ├── middleware/
+│   │   ├── requireAdmin.js
+│   │   └── requireUser.js
+│   │
+│   ├── routes/
+│   │   ├── auth.js
+│   │   ├── employees.js
+│   │   └── shifts.js
+│   │
+│   ├── utils/
+│   │   └── jwt.js
+│   │
+│   └── db/
+│       ├── client.js
+│       ├── schema.sql
+│       ├── seed.js
+│       │
+│       └── queries/
+│           ├── connections.js
+│           ├── employees.js
+│           ├── shifts.js
+│           └── timePunches.js
+│
+├── diagrams/
+│   └── erd-mermaid.md
+│
+├── docs/
+│   ├── api-routes.md
+│   ├── build-order.md
+│   ├── database-schema.md
+│   ├── frontend-routes.md
+│   └── user-stories.md
+│
+└── wireframes/
     ├── README.md
-    ├── docs/
-    │   ├── api-routes.md
-    │   ├── build-order.md
-    │   ├── database-schema.md
-    │   ├── frontend-routes.md
-    │   └── user-stories.md
-    ├── diagrams/
-    │   └── erd-mermaid.md
-    └── wireframes/
-        ├── README.md
-        └── wireframe.png
+    └── wireframe.png
+```
 
 ---
 
@@ -183,7 +227,7 @@ Recommended build order is available here: [Build Order Plan](docs/build-order.m
 ## 🔮 Future Improvements
 
 - Fair scheduling recommendations based on employee hours
-- Real-time labor issue alerts
+- Insert missing punches from the admin interface
 - Manager-level role hierarchy
 - Payroll integration
 - Schedule publishing tools

@@ -1,5 +1,7 @@
 # User Stories
 
+> Note: This document is a planning artifact and user-story reference, not a current implementation spec.
+
 ## Overview
 
 Project Chronos is designed for two main user types in the MVP:

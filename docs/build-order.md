@@ -1,5 +1,7 @@
 # Build Order Plan
 
+> Note: This document is a planning artifact and development roadmap, not a current implementation spec.
+
 ## Overview
 
 This document outlines the recommended development order for Project Chronos after the pitch is approved.

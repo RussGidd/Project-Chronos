@@ -2,15 +2,18 @@
 
 ## Overview
 
-Project Chronos uses a backend API to support employee authentication, employee shift tracking, time punches, hours tracking, and role-based administrator oversight.
+Project Chronos currently uses a small role-aware Express API to support:
+- employee authentication
+- employee shift and lunch actions
+- employee weekly hours review
+- admin employee management
+- admin weekly history review
+- admin punch-time correction
 
-The MVP route groups are:
+The backend route groups currently implemented are:
 - Auth
 - Employees
 - Shifts
-- Time Punches
-- Hours
-- Admin
 
 ---
 
@@ -22,14 +25,14 @@ Authenticate an employee using employee number and PIN.
 **Request body example:**
 
     {
-      "employeeNumber": 12345,
+      "employeeNumber": 2,
       "pin": "54321"
     }
 
 **Purpose:**
 - verify employee credentials
-- return an authentication token
-- allow access to employee or admin features based on employee role
+- return a JWT
+- return the employee identity and role needed by the frontend
 
 **Tables used:**
 - employees
@@ -38,12 +41,30 @@ Authenticate an employee using employee number and PIN.
 
 ## Employee Routes
 
-### GET /api/employees/:employeeNumber
-Get a single employee profile.
+### GET /api/employees
+Get all employees for the admin employee list.
+
+**Access:**
+- admin only
 
 **Purpose:**
-- return employee profile data
-- support admin employee detail page
+- load employee records for the admin panel
+- support selecting an employee for weekly history review
+
+**Tables used:**
+- employees
+
+---
+
+### POST /api/employees
+Create a new employee account.
+
+**Access:**
+- admin only
+
+**Purpose:**
+- create employee login and profile records
+- support the admin employee creation flow
 
 **Tables used:**
 - employees
@@ -51,14 +72,16 @@ Get a single employee profile.
 ---
 
 ### GET /api/employees/:employeeNumber/history?weekStart=YYYY-MM-DD
-Get one employee's admin history for a single Monday-through-Sunday week.
+Get one employee's weekly admin history.
+
+**Access:**
+- admin only
 
 **Purpose:**
-- show the employee profile with one week of shifts and punches
-- total the employee's hours for the selected week
-- group weekly hours by day
+- return one employee profile
+- return one Monday-through-Sunday week of shifts and punches
+- return weekly and daily totals
 - support previous, current, and next week navigation
-- stop previous navigation at the week the employee was created
 
 **Tables used:**
 - employees
@@ -67,228 +90,133 @@ Get one employee's admin history for a single Monday-through-Sunday week.
 
 ---
 
-### POST /api/employees
-Create a new employee account.
+### PATCH /api/employees/:employeeNumber/punches/:punchId
+Update one existing punch time for one employee.
+
+**Access:**
+- admin only
 
 **Purpose:**
-- allow admin to add a new employee
-- store login and profile information
-- support the employee creation flow requested in instructor feedback
+- allow inline correction of an existing punch
+- preserve the original punch date while changing only the time
+- prevent admins from editing another admin's punches
 
 **Tables used:**
 - employees
+- shifts
+- time_punches
 
 ---
 
-### PATCH /api/employees/:employeeNumber
-Update employee information.
+### GET /api/employees/me/hours/week
+Get the logged-in employee's current weekly hours summary.
+
+**Access:**
+- authenticated employee
 
 **Purpose:**
-- allow admin to edit employee details
-- allow admin to reset employee PIN
-- allow admin to change role
-- allow admin to activate or deactivate employees
+- return current week totals
+- return daily totals
+- return punch details for the week
+- show running hours while an open shift is still active
 
 **Tables used:**
 - employees
+- shifts
+- time_punches
 
 ---
 
 ## Shift Routes
 
-### POST /api/shifts
-Create a new shift for an employee.
+### POST /api/shifts/start
+Begin a new shift for the logged-in employee.
 
-**Request body example:**
-
-    {
-      "employeeNumber": 12345,
-      "shiftDate": "2026-03-28"
-    }
+**Access:**
+- authenticated employee
 
 **Purpose:**
-- create a new shift record when an employee begins work
-- tie future punches to a specific shift
+- create an open shift
+- create a `shift_start` punch
+- prevent duplicate open shifts
 
 **Tables used:**
-- shifts
-
----
-
-### GET /api/shifts/:employeeNumber/today
-Get today’s shifts for one employee.
-
-**Purpose:**
-- support employee hours view
-- support admin employee detail page
-- help identify an employee’s active or completed shift for the day
-
-**Tables used:**
-- shifts
-
----
-
-### GET /api/shifts/:employeeNumber/week
-Get current week shifts for one employee.
-
-**Purpose:**
-- support weekly hours view
-- support weekly admin review
-
-**Tables used:**
-- shifts
-
----
-
-### PATCH /api/shifts/:shiftId
-Update a shift record.
-
-**Purpose:**
-- allow admin to flag or correct a shift
-- allow shift status updates such as open, completed, flagged, or corrected
-
-**Tables used:**
-- shifts
-
----
-
-## Time Punch Routes
-
-### POST /api/time-punches
-Create a new time punch for a shift.
-
-**Request body example:**
-
-    {
-      "shiftId": 14,
-      "punchType": "shift_start",
-      "punchTime": "2026-03-28T08:00:00"
-    }
-
-**Purpose:**
-- record shift start
-- record lunch start
-- record lunch end
-- record shift end
-- keep each punch tied to a specific shift
-
-**Tables used:**
-- time_punches
-
----
-
-### GET /api/time-punches/:shiftId
-Get all time punches for one shift.
-
-**Purpose:**
-- show punch history for one shift
-- support admin employee detail page
-- include admin-only notes when an admin reviews punch history
-
-**Tables used:**
-- time_punches
-
----
-
-### PATCH /api/employees/:employeeNumber/punches/:timePunchId
-Update one time punch for one employee.
-
-**Purpose:**
-- allow admin to correct an employee punch time
-- prevent admins from editing another admin's punches
-- preserve the punch date while changing the hour, minute, and AM or PM
-
-**Tables used:**
-- employees
 - shifts
 - time_punches
 
 ---
 
-## Hours Routes
+### POST /api/shifts/lunch/start
+Clock out for lunch.
 
-### GET /api/employees/me/hours/week
-Get the logged-in employee’s current week shift summary, daily totals, and total weekly hours.
+**Access:**
+- authenticated employee
 
 **Purpose:**
-- show employee hours for the week starting Monday at midnight
-- show daily totals such as Monday, Tuesday, and Wednesday
-- show "and counting" when an employee still has an open shift
-- support employee hours page
-- keep admin-only punch notes out of the employee-facing response
+- create a `lunch_start` punch
+- require an open shift
+- prevent duplicate lunch-start actions
 
 **Tables used:**
-- employees
 - shifts
 - time_punches
 
 ---
 
-## Admin Routes
+### POST /api/shifts/lunch/end
+Clock back in from lunch.
 
-### GET /api/admin/dashboard/today
-Get current employee statuses and today’s shift totals.
+**Access:**
+- authenticated employee
 
 **Purpose:**
-- show all employees on the admin dashboard
-- support sorting by hours, hire date, or name
-- show whether employees are clocked in, on lunch, or clocked out
-- surface possible shift issues for admin review
+- create a `lunch_end` punch
+- require an open shift
+- require the employee to currently be on lunch
 
 **Tables used:**
-- employees
 - shifts
 - time_punches
 
 ---
 
-### GET /api/admin/dashboard/week
-Get employee week totals for the admin dashboard.
+### POST /api/shifts/end
+End the current shift.
+
+**Access:**
+- authenticated employee
 
 **Purpose:**
-- show all employee weekly totals
-- support labor review and comparison
+- create a `shift_end` punch
+- mark the shift as completed
+- prevent ending a shift while still on lunch
 
 **Tables used:**
-- employees
 - shifts
 - time_punches
-
----
-
-### GET /api/admin/employees
-Get all employees for admin view.
-
-**Purpose:**
-- show sortable employee list
-- support dashboard and employee detail navigation
-
-**Tables used:**
-- employees
 
 ---
 
 ## Validation Notes
 
-The backend will also be responsible for enforcing punch and shift rules such as:
-- employee cannot start a shift if an open shift already exists
-- employee cannot start lunch before starting a shift
-- employee cannot end a shift before starting one
-- employee cannot start lunch twice in a row
-- employee cannot end lunch without first starting lunch
-- time punches must belong to a valid shift
-
-Some edge cases may still be allowed with warnings or admin review, depending on business rules.
+The current backend enforces rules such as:
+- an employee cannot start a new shift if an open shift already exists
+- an employee cannot start lunch without an open shift
+- an employee cannot start lunch twice in a row
+- an employee cannot end lunch unless they are currently on lunch
+- an employee cannot end a shift while still on lunch
+- admins can only edit existing punches, not create missing punch records
+- admins cannot edit another admin's punches
 
 ---
 
 ## Future API Expansion Ideas
 
-Possible future routes:
+Possible future backend additions:
+- routes for inserting missing punches
+- audit history for corrected punch records
 - scheduling routes
-- audit log routes
 - manager notes routes
 - payroll export routes
-- notification routes
 
-These are not required for the MVP.
+These are not part of the current implementation.

@@ -1,242 +1,99 @@
-# Frontend Routes and Page Responsibilities
+# Frontend Structure and View Responsibilities
 
 ## Overview
 
-Project Chronos is planned as a React-based web application with two main user flows:
-- employee kiosk flow
-- administrator dashboard flow
+Project Chronos currently uses one role-aware React application centered in `client/src/App.jsx`.
 
-The MVP route plan separates employee-facing pages from admin-facing pages so the application is easier to understand, explain, and build.
+Instead of separate page routes for employees and admins, the current frontend branches by authentication state and employee role:
+- logged-out view
+- authenticated employee view
+- authenticated admin view
 
-Administrators are employees with elevated permissions based on role. The frontend still includes a separate admin login page to keep the kiosk flow simple and the admin tools protected.
+This keeps the MVP structure simple, easy to explain, and aligned with the current repo.
 
 ---
 
-## Route List
+## Logged-Out Login View
 
-## Home / Kiosk Page
-**Route:** `/`
+**User type:**
+- employee
+- admin
 
-**User type:**  
-Employee-facing primary page
+**Purpose:**
+- provide the main login entry point for the application
 
-**Purpose:**  
-This is the main page employees use to interact with the system.
-
-**Responsibilities:**
-- display current date and time
-- allow employee number entry
-- display large on-screen number pad
-- allow employee to choose:
-  - Begin Shift
-  - Clock Out for Lunch
-  - Clock In from Lunch
-  - End Shift
-  - View Hours
-- display confirmation prompts such as yes or cancel
-- provide access to admin login
+**Current responsibilities:**
+- collect employee number
+- collect PIN
+- support on-screen numeric keypad input
+- submit login credentials
+- display success or validation messages
+- present the Project Chronos visual identity on the login screen
 
 **Notes:**
-- this page should be fast and simple
-- this page acts like a kiosk screen, not a traditional employee dashboard
+- this is the shared entry point for both employee and admin users
+- the current implementation does not use a separate admin login page
 
 ---
 
-## Employee Hours Page
-**Route:** `/hours`
+## Employee View
 
-**User type:**  
-Employee-facing authenticated page
+**User type:**
+- authenticated employee
 
-**Purpose:**  
-Allows an employee to view their hours, shifts, and time punches.
+**Purpose:**
+- let employees manage their own shift flow and review their weekly hours
 
-**Responsibilities:**
-- show employee name and employee number
-- show current week shift summary
-- show current week daily totals
-- show current week total hours
-- show running totals if the employee is still clocked in
-- allow return to the kiosk page
-
-**Notes:**
-- access should require successful employee authentication
-- this page should only show the logged-in employee’s information
+**Current responsibilities:**
+- begin shift
+- clock out for lunch
+- clock in from lunch
+- end shift
+- view current weekly totals
+- view daily totals
+- view weekly punch details
+- show running time while a shift is still open
+- log out
 
 ---
 
-## Admin Login Page
-**Route:** `/admin/login`
+## Admin View
 
-**User type:**  
-Administrator
+**User type:**
+- authenticated employee with admin role
 
-**Purpose:**  
-Provides a secure login page for employees with admin-level access.
+**Purpose:**
+- let admins manage employee records and review employee timekeeping history
 
-**Responsibilities:**
-- allow employee number or admin login credential entry
-- allow PIN or password entry depending on final auth design
-- submit admin login credentials
-- route successful admin login to the admin dashboard
-- allow return to the kiosk page
-
-**Notes:**
-- this page is intentionally separate from the main employee kiosk flow
-- this keeps the employee experience simple and the admin experience protected
-
----
-
-## Admin Dashboard Today View
-**Route:** `/admin/dashboard/today`
-
-**User type:**  
-Administrator
-
-**Purpose:**  
-Shows employee activity and hours for the current day.
-
-**Responsibilities:**
-- show all employees in a table or list
-- display current employee status
-- display today’s shift summary
-- display today’s running or completed hours
-- allow sorting by:
-  - hours worked
-  - date of hire
-  - name
-- allow navigation to a specific employee detail page
-- allow navigation to week view
-- allow navigation to create employee page
-- allow logout
-
-**Notes:**
-- this page is the main admin control center for real-time daily oversight
-- this page should make employee creation clearly available
+**Current responsibilities:**
+- load employee list
+- create employee accounts
+- select an employee from the list
+- load one employee's weekly history
+- navigate previous, current, and next weeks
+- view weekly and daily totals
+- view shift and punch history for the selected week
+- edit existing punch times inline with confirmation
+- log out
 
 ---
 
-## Admin Dashboard Week View
-**Route:** `/admin/dashboard/week`
+## Current Frontend Design Notes
 
-**User type:**  
-Administrator
-
-**Purpose:**  
-Shows employee weekly hour totals and work patterns.
-
-**Responsibilities:**
-- show all employees in a table or list
-- display weekly shift summaries
-- display weekly total hours
-- allow sorting by:
-  - weekly hours worked
-  - date of hire
-  - name
-- allow navigation to a specific employee detail page
-- allow navigation back to today view
-- allow navigation to create employee page
-- allow logout
-
-**Notes:**
-- this page supports the long-term idea of fairer labor review
-- scheduling logic itself is not part of the MVP
+- The current frontend is intentionally implemented in a single large `App.jsx` file.
+- Role-based branching determines whether the user sees the employee or admin experience.
+- The current app does not use React Router.
+- The current app does not implement separate dashboard pages for today view, week view, or employee detail routes.
 
 ---
 
-## Admin Employee Detail Page
-**Route:** `/admin/employees/:employeeNumber`
+## Future Frontend Expansion Ideas
 
-**User type:**  
-Administrator
+Possible future frontend changes:
+- split the single-file app into smaller components
+- add route-based navigation if the app grows
+- add a stronger kiosk-only mode
+- add richer admin reporting views
+- add missing-punch creation tools for admins
 
-**Purpose:**  
-Allows admin to review one employee record in detail.
-
-**Responsibilities:**
-- show employee profile details
-- show employee status and role
-- show employee date of hire
-- show employee weekly hours from Monday at midnight through Sunday night
-- show daily totals for the selected week
-- show employee shifts and time punches for the selected week
-- allow previous week navigation until the employee creation week
-- allow next week navigation until the current week
-- allow a current week button between previous and next navigation
-- allow punch rows to become inline edit fields when an editable punch is clicked
-- confirm punch time changes before saving
-- allow admin to:
-  - edit employee profile information
-  - reset employee PIN
-  - change employee role
-  - activate or deactivate employee
-  - add or correct an employee time punch
-- allow return to dashboard
-
-**Notes:**
-- this page is where employee management and timekeeping correction happen
-
----
-
-## Admin Create Employee Page
-**Route:** `/admin/employees/new`
-
-**User type:**  
-Administrator
-
-**Purpose:**  
-Allows admin to create a new employee account.
-
-**Responsibilities:**
-- allow entry of employee name fields
-- allow optional nickname entry
-- allow PIN setup or initial PIN assignment
-- allow role selection
-- allow status selection if needed
-- submit new employee creation form
-- return to dashboard or new employee detail page after creation
-
-**Notes:**
-- this route was added to make the employee creation flow visible in the admin interface
-- this directly addresses instructor feedback from the pitch review
-
----
-
-## Route Protection Notes
-
-### Employee-Protected Route
-- `/hours`
-
-This route should require valid employee authentication.
-
-### Admin-Protected Routes
-- `/admin/dashboard/today`
-- `/admin/dashboard/week`
-- `/admin/employees/new`
-- `/admin/employees/:employeeNumber`
-
-These routes should require valid admin authentication and authorization.
-
----
-
-## MVP Route Design Goals
-
-The MVP route structure is designed to:
-- keep employee actions fast and simple
-- keep admin functions clearly separated
-- make the application easy to explain in the project pitch
-- support reusable React components and predictable navigation
-- clearly show the employee creation flow in the admin experience
-
----
-
-## Future Route Ideas
-
-Possible future routes:
-- `/admin/schedules`
-- `/admin/alerts`
-- `/admin/payroll`
-- `/employee/profile`
-- `/employee/history`
-
-These are not required for the MVP.
+These are not required by the current implementation.
