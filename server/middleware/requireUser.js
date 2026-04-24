@@ -24,7 +24,7 @@ export async function requireUser(request, response, next) {
 
     if (employee.status !== "active") {
       return response.status(403).json({
-        error: "This employee account is inactive.",
+        error: "Employee currently set to inactive status. Please see Administration.",
       });
     }
 

@@ -65,7 +65,6 @@ These are reasonable expansion ideas beyond the current implemented MVP.
 - Scheduling logic based on seniority or lowest weekly hours
 - Expanded role permissions for shift managers and general managers
 - Admin tools to add missing punches, not just edit existing ones
-- Manager comments or notes on employee records
 - Edit history for changed punches
 - Leave, vacation, medical, or restricted employee statuses
 - Kiosk screensaver and auto-logout behavior
@@ -89,9 +88,9 @@ Full user stories are available here:
 ## 🗄️ Database Design
 
 The MVP database is designed around:
-- employees
-- shifts
-- time_punches
+- Employees
+- Shifts
+- Time Punches
 
 Administrators are not stored in a separate table. Instead, elevated access is handled through a role field on the employees table.
 

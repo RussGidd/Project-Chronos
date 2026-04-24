@@ -223,12 +223,10 @@ function App() {
   }
 
   function handleKeypadClear() {
-    if (activeLoginField === "pin") {
-      setPin("");
-      return;
-    }
-
     setEmployeeNumber("");
+    setPin("");
+    setMessage("");
+    setActiveLoginField("employeeNumber");
   }
 
   async function handleLogin(event) {
@@ -422,7 +420,7 @@ function App() {
     if (!newEmployeePin || !newEmployeeFirstName || !newEmployeeLastName) {
       setCreateEmployeeFeedback(
         "error",
-        "PIN, first name, and last name are required before creating an employee.",
+        "PIN, First Name, and Last Name are required before creating an Employee.",
       );
       return;
     }
@@ -1288,14 +1286,14 @@ function App() {
                             <span>
                               Notes -{" "}
                               {getShiftNoteText(shift) ||
-                                "No admin note for this shift."}
+                                "No admin notes for this shift."}
                             </span>
 
                             {canManageSelectedEmployeeHistory() &&
                               (editingShiftNoteId === shift.id ? (
                                 <div className="shift-note-editor">
                                   <label htmlFor={`shift-note-${shift.id}`}>
-                                    Shift Note
+                                    Shift Notes
                                   </label>
                                   <textarea
                                     id={`shift-note-${shift.id}`}
