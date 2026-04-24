@@ -224,6 +224,32 @@ li > button {
   text-align: left;
 }
 
+.employee-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.employee-row-actions button {
+  width: fit-content;
+  min-width: 11rem;
+}
+
+.danger-action {
+  border-color: rgba(255, 140, 140, 0.48);
+  background: rgba(63, 18, 24, 0.72);
+  color: #ffd9dd;
+}
+
+.danger-action:not(:disabled):hover,
+.danger-action:not(:disabled):focus-visible {
+  border-color: rgba(255, 174, 174, 0.82);
+  background: rgba(95, 27, 35, 0.86);
+  color: #fff1f3;
+  box-shadow: 0 0 0 3px rgba(255, 107, 129, 0.18);
+}
+
 .punch-row {
   min-height: auto;
   padding: 0.25rem 0.55rem;
@@ -246,6 +272,13 @@ li > button {
   margin: 1rem 0 0.5rem;
   color: var(--accent-hover);
   font-size: 0.95rem;
+}
+
+.employee-lock-note {
+  margin: 0;
+  align-self: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .punch-edit-form {

@@ -7,7 +7,7 @@ Author: Russell Giddens
 
 ## 🚀 30-Second Elevator Pitch
 
-Project Chronos is a full-stack timekeeping management application built for small businesses that need a cleaner and more reliable way to track employee work hours. Employees can log in with an employee number and PIN to begin shifts, clock out and back in for lunch, end shifts, and view lunch-aware weekly hour totals with punch details and running time while a shift is open. Employees with admin permissions can access protected management views to load employees, create employee accounts, review an employee's weekly shift and punch history, navigate between work weeks, view weekly and daily hour totals, and correct existing punch times inline. Chronos is designed as a role-aware full-stack system today, with a long-term goal of growing into a fuller labor management tool that helps managers review hours and make fairer scheduling decisions with accurate timekeeping data.
+Project Chronos is a full-stack timekeeping management application built for small businesses that need a cleaner and more reliable way to track employee work hours. Employees can log in with an employee number and PIN to begin shifts, clock out and back in for lunch, end shifts, and view lunch-aware weekly hour totals with punch details and running time while a shift is open. Employees with admin permissions can access protected management views to load employees, create and delete employee accounts, review an employee's weekly shift and punch history, navigate between work weeks, view weekly and daily hour totals, and correct existing punch times inline. Chronos is designed as a role-aware full-stack system today, with a long-term goal of growing into a fuller labor management tool that helps managers review hours and make fairer scheduling decisions with accurate timekeeping data.
 
 ---
 
@@ -41,6 +41,7 @@ These are the core features currently implemented in the Project Chronos MVP.
 ### 5. Admin Employee Management
 - View all employees
 - Create employee accounts
+- Delete employee accounts with confirmation
 - Select an employee to review weekly history
 - View weekly and daily hour totals for a selected employee
 
@@ -49,6 +50,7 @@ These are the core features currently implemented in the Project Chronos MVP.
 - Navigate employee history by week
 - Edit existing punch times with confirmation
 - Prevent admins from editing another admin's punches
+- Prevent admins from deleting themselves or another admin
 
 ---
 

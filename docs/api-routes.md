@@ -7,6 +7,7 @@ Project Chronos currently uses a small role-aware Express API to support:
 - employee shift and lunch actions
 - employee weekly hours review
 - admin employee management
+- admin employee deletion
 - admin weekly history review
 - admin punch-time correction
 
@@ -68,6 +69,25 @@ Create a new employee account.
 
 **Tables used:**
 - employees
+
+---
+
+### DELETE /api/employees/:employeeNumber
+Delete one employee account.
+
+**Access:**
+- admin only
+
+**Purpose:**
+- permanently remove an employee account
+- rely on database cascade behavior to remove related shifts and punch records
+- prevent admins from deleting their own account
+- prevent admins from deleting another admin account
+
+**Tables used:**
+- employees
+- shifts
+- time_punches
 
 ---
 

@@ -87,3 +87,23 @@ export async function getEmployeeByEmployeeNumber(employeeNumber) {
   const result = await db.query(SQL, [employeeNumber]);
   return result.rows[0] || null;
 }
+
+export async function deleteEmployeeByEmployeeNumber(employeeNumber) {
+  const SQL = `
+    DELETE FROM employees
+    WHERE employee_number = $1
+    RETURNING
+      employee_number,
+      first_name,
+      nickname,
+      last_name,
+      date_of_hire,
+      role,
+      status,
+      created_at,
+      updated_at;
+  `;
+
+  const result = await db.query(SQL, [employeeNumber]);
+  return result.rows[0] || null;
+}

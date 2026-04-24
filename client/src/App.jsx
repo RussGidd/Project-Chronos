@@ -114,6 +114,13 @@ function App() {
     return punchLabels[punchType] || formatDisplayText(punchType);
   }
 
+  function canDeleteEmployee(listedEmployee) {
+    return (
+      listedEmployee.role !== "admin" &&
+      listedEmployee.employee_number !== employee.employeeNumber
+    );
+  }
+
   function handleKeypadDigit(digit) {
     if (activeLoginField === "pin") {
       setPin(function (currentPin) {
@@ -435,6 +442,51 @@ function App() {
     }
   }
 
+  async function handleDeleteEmployee(listedEmployee) {
+    const fullName = `${listedEmployee.first_name} ${listedEmployee.last_name}`;
+    const shouldDelete = window.confirm(
+      `Delete employee #${listedEmployee.employee_number} (${fullName})?\n\nThis will permanently remove the employee and all related shifts and punch records.`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    setMessage("Deleting employee...");
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/employees/${listedEmployee.employee_number}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.error || "Unable to delete employee.");
+      }
+
+      if (
+        employeeHistory?.employee.employee_number ===
+        listedEmployee.employee_number
+      ) {
+        setHistoryEmployeeNumber("");
+        setEmployeeHistory(null);
+        cancelPunchEdit();
+      }
+
+      await handleLoadEmployees();
+      setMessage(json.message || `Employee deleted: ${fullName}`);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
   function handleLogout() {
     setToken("");
     setEmployee(null);
@@ -677,6 +729,40 @@ function App() {
                       {formatDisplayText(listedEmployee.role)},{" "}
                       {formatDisplayText(listedEmployee.status)})
                     </button>
+
+                    <div className="employee-row-actions">
+                      <button
+                        type="button"
+                        onClick={function () {
+                          handleLoadEmployeeHistory(
+                            listedEmployee.employee_number,
+                          );
+                        }}
+                      >
+                        View Weekly History
+                      </button>
+
+                      {canDeleteEmployee(listedEmployee) ? (
+                        <button
+                          className="danger-action"
+                          type="button"
+                          onClick={function () {
+                            handleDeleteEmployee(listedEmployee);
+                          }}
+                        >
+                          Delete Employee
+                        </button>
+                      ) : (
+                        <p className="helper-text employee-lock-note">
+                          {listedEmployee.employee_number ===
+                          employee.employeeNumber
+                            ? "Your own admin account cannot be deleted."
+                            : listedEmployee.role === "admin"
+                              ? "Admin accounts cannot be deleted here."
+                              : ""}
+                        </p>
+                      )}
+                    </div>
                   </li>
                 );
               })}

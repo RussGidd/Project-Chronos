@@ -3,6 +3,7 @@ import { requireAdmin } from "../middleware/requireAdmin.js";
 import { requireUser } from "../middleware/requireUser.js";
 import {
   createEmployee,
+  deleteEmployeeByEmployeeNumber,
   getAllEmployees,
   getSafeEmployeeByEmployeeNumber,
 } from "../db/queries/employees.js";
@@ -21,6 +22,7 @@ const employeesRouter = express.Router();
 
 employeesRouter.get("/", requireAdmin, getEmployees);
 employeesRouter.post("/", requireAdmin, addEmployee);
+employeesRouter.delete("/:employeeNumber", requireAdmin, removeEmployee);
 employeesRouter.get(
   "/:employeeNumber/history",
   requireAdmin,
@@ -68,6 +70,51 @@ async function addEmployee(request, response) {
   } catch (error) {
     return response.status(500).json({
       error: "Failed to create employee.",
+    });
+  }
+}
+
+async function removeEmployee(request, response) {
+  try {
+    const employeeNumber = Number(request.params.employeeNumber);
+
+    if (!employeeNumber) {
+      return response.status(400).json({
+        error: "A valid employee number is required.",
+      });
+    }
+
+    const employee = await getSafeEmployeeByEmployeeNumber(employeeNumber);
+
+    if (!employee) {
+      return response.status(404).json({
+        error: "Employee not found.",
+      });
+    }
+
+    if (employee.employee_number === request.user.employeeNumber) {
+      return response.status(403).json({
+        error: "Admins cannot delete their own account.",
+      });
+    }
+
+    if (employee.role === "admin") {
+      return response.status(403).json({
+        error: "Admins cannot delete another admin account.",
+      });
+    }
+
+    const deletedEmployee = await deleteEmployeeByEmployeeNumber(
+      employeeNumber,
+    );
+
+    return response.status(200).json({
+      message: `Employee deleted: ${deletedEmployee.first_name} ${deletedEmployee.last_name}`,
+      employee: deletedEmployee,
+    });
+  } catch (error) {
+    return response.status(500).json({
+      error: "Failed to delete employee.",
     });
   }
 }
