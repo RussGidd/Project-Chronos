@@ -44,6 +44,8 @@ const corsOptions = {
 app.use(express.json());
 app.use(cors(corsOptions));
 
+// Legacy setup/debug scaffold routes.
+// These do not run the main Chronos schema.sql + db/seed.js reset flow.
 app.get("/connect", makeContact);
 app.get("/seed", seed);
 
