@@ -73,7 +73,7 @@ These are reasonable expansion ideas beyond the current implemented MVP.
 
 Project Chronos is designed for two main user types in the MVP:
 - employees
-- administrators and managers with elevated permissions
+- administrators with elevated permissions
 
 Full user stories are available here:  
 [User Stories](docs/user-stories.md)
@@ -112,7 +112,7 @@ Current backend route documentation is available here:
 ## 🧩 Frontend Planning
 
 The current frontend is intentionally built as one role-aware React application:
-- Login and kiosk-style employee entry
+- Login with kiosk-inspired employee time entry
 - Employee shift actions and weekly hours view
 - Admin employee list, weekly history review, and employee creation tools
 
