@@ -27,7 +27,15 @@ export async function getTimePunchesByShiftId(shiftId) {
     SELECT *
     FROM time_punches
     WHERE shift_id = $1
-    ORDER BY punch_time ASC;
+    ORDER BY
+      CASE punch_type
+        WHEN 'shift_start' THEN 1
+        WHEN 'lunch_start' THEN 2
+        WHEN 'lunch_end' THEN 3
+        WHEN 'shift_end' THEN 4
+        ELSE 5
+      END,
+      punch_time ASC;
   `;
   const result = await db.query(SQL, [shiftId]);
   return result.rows;
@@ -45,7 +53,15 @@ export async function getEmployeeTimePunchesByShiftId(shiftId) {
       updated_at
     FROM time_punches
     WHERE shift_id = $1
-    ORDER BY punch_time ASC;
+    ORDER BY
+      CASE punch_type
+        WHEN 'shift_start' THEN 1
+        WHEN 'lunch_start' THEN 2
+        WHEN 'lunch_end' THEN 3
+        WHEN 'shift_end' THEN 4
+        ELSE 5
+      END,
+      punch_time ASC;
   `;
 
   const result = await db.query(SQL, [shiftId]);

@@ -162,6 +162,7 @@ async function getEmployeeHistory(request, response) {
 async function getMyHoursThisWeek(request, response) {
   try {
     const employeeNumber = request.user.employeeNumber;
+    const currentWeekStart = getWeekStartDate(new Date());
 
     const weekShifts = await getThisWeekShiftsByEmployeeNumber(employeeNumber);
 
@@ -188,6 +189,10 @@ async function getMyHoursThisWeek(request, response) {
 
     return response.status(200).json({
       employeeNumber,
+      week: {
+        weekStart: currentWeekStart,
+        weekEnd: addDays(currentWeekStart, 6),
+      },
       totalHoursThisWeek: Number(totalHoursThisWeek.toFixed(2)),
       isRunning,
       dailyTotals,

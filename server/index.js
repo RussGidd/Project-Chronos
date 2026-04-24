@@ -12,9 +12,38 @@ import {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const allowedOrigins = new Set(
+  [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+    process.env.FRONTEND_URL,
+    process.env.FRONTEND_URL_2,
+  ].filter(Boolean),
+);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Set FRONTEND_URL on Render to your deployed frontend URL.
+    // Optionally set FRONTEND_URL_2 later if you add a custom domain.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS."));
+  },
+  methods: ["GET", "POST", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Authorization", "Content-Type"],
+};
 
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.get("/connect", makeContact);
 app.get("/seed", seed);
